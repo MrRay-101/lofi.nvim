@@ -46,20 +46,20 @@ Based on plan.md structure:
 
 **CRITICAL**: No user story work can begin until this phase AND Phase 0 are complete
 
-- [ ] T006 Create error types enum with MODEL_NOT_FOUND, MODEL_LOAD_FAILED, MODEL_DOWNLOAD_FAILED, MODEL_INFERENCE_FAILED, QUEUE_FULL, INVALID_DURATION, INVALID_PROMPT in daemon/src/error.rs
-- [ ] T007 [P] Create Track struct with track_id, path, prompt, duration_sec, sample_rate, seed, model_version, generation_time_sec, created_at per data-model.md in daemon/src/types/track.rs
-- [ ] T008 [P] Create GenerationJob struct with job_id, track_id, prompt, duration_sec, seed, priority, status, progress fields per data-model.md in daemon/src/types/job.rs
-- [ ] T009 [P] Create ModelConfig struct with vocab_size, num_hidden_layers, num_attention_heads, d_model, d_kv, audio_channels, sample_rate, codebooks, pad_token_id in daemon/src/types/config.rs
-- [ ] T010 Create types module re-exporting Track, GenerationJob, ModelConfig, error types in daemon/src/types/mod.rs
-- [ ] T011 Create config module with Device enum (Auto, Cpu, Cuda, Metal), DaemonConfig struct with model_path, cache_path, device, threads in daemon/src/config.rs
-- [ ] T012 [P] Create track_id computation function using sha256(prompt:seed:duration:model_version).hex()[0:16] in daemon/src/types/track.rs
-- [ ] T013 Create lib.rs exposing types, config, error modules in daemon/src/lib.rs
+- [x] T006 Create error types enum with MODEL_NOT_FOUND, MODEL_LOAD_FAILED, MODEL_DOWNLOAD_FAILED, MODEL_INFERENCE_FAILED, QUEUE_FULL, INVALID_DURATION, INVALID_PROMPT in daemon/src/error.rs
+- [x] T007 [P] Create Track struct with track_id, path, prompt, duration_sec, sample_rate, seed, model_version, generation_time_sec, created_at per data-model.md in daemon/src/types/track.rs
+- [x] T008 [P] Create GenerationJob struct with job_id, track_id, prompt, duration_sec, seed, priority, status, progress fields per data-model.md in daemon/src/types/job.rs
+- [x] T009 [P] Create ModelConfig struct with vocab_size, num_hidden_layers, num_attention_heads, d_model, d_kv, audio_channels, sample_rate, codebooks, pad_token_id in daemon/src/types/config.rs
+- [x] T010 Create types module re-exporting Track, GenerationJob, ModelConfig, error types in daemon/src/types/mod.rs
+- [x] T011 Create config module with Device enum (Auto, Cpu, Cuda, Metal), DaemonConfig struct with model_path, cache_path, device, threads in daemon/src/config.rs
+- [x] T012 [P] Create track_id computation function using sha256(prompt:seed:duration:model_version).hex()[0:16] in daemon/src/types/track.rs
+- [x] T013 Create lib.rs exposing types, config, error modules in daemon/src/lib.rs
 
 ### Phase 2 Verification (MANDATORY - Principle VI)
 
-- [ ] V004 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
-- [ ] V005 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [ ] V006 [VERIFY] Confirm all types/mod.rs exports are imported in lib.rs
+- [x] V004 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
+- [x] V005 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [x] V006 [VERIFY] Confirm all types/mod.rs exports are imported in lib.rs
 
 ---
 
