@@ -229,17 +229,12 @@ impl JsonRpcError {
 // ============================================================================
 
 /// Priority level for generation requests.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Priority {
+    #[default]
     Normal,
     High,
-}
-
-impl Default for Priority {
-    fn default() -> Self {
-        Priority::Normal
-    }
 }
 
 /// Parameters for a generate request.

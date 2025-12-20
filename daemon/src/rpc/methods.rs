@@ -4,16 +4,18 @@
 
 use std::time::Instant;
 
+use std::cell::RefCell;
+
 use crate::audio::{write_wav, SAMPLE_RATE};
 use crate::cli::TOKENS_PER_SECOND;
-use crate::generation::generate_with_models;
+use crate::generation::{generate_with_models, ProgressTracker};
 use crate::models::ensure_models;
 use crate::types::{compute_track_id, Track};
 
 use super::server::{send_notification, ServerState};
 use super::types::{
     GenerateParams, GenerateResult, GenerationCompleteParams, GenerationErrorParams,
-    GenerationStatus, JsonRpcError,
+    GenerationProgressParams, GenerationStatus, JsonRpcError,
 };
 
 /// Handles a JSON-RPC method call.
@@ -53,7 +55,7 @@ fn handle_generate(
     params.validate()?;
 
     // Generate seed if not provided
-    let seed = params.seed.unwrap_or_else(|| rand::random());
+    let seed = params.seed.unwrap_or_else(rand::random);
 
     // Ensure models are downloaded
     let model_dir = state.config.effective_model_path();
@@ -119,7 +121,44 @@ fn handle_generate(
     let start_time = Instant::now();
     let max_tokens = params.duration_sec as usize * TOKENS_PER_SECOND;
 
-    match generate_with_models(models, &params.prompt, max_tokens, |_, _| {}) {
+    // Create progress tracker for 5% increment notifications
+    let progress_tracker = RefCell::new(ProgressTracker::new(params.duration_sec));
+    let track_id_for_progress = track_id.clone();
+
+    match generate_with_models(models, &params.prompt, max_tokens, |current, total| {
+        let mut tracker = progress_tracker.borrow_mut();
+        tracker.update(current);
+
+        // Check if we should send a notification (every 5% increment)
+        if let Some(percent) = tracker.should_notify() {
+            let (_, tokens_generated, tokens_estimated, eta_sec) = tracker.get_progress();
+            send_notification(
+                "generation_progress",
+                GenerationProgressParams {
+                    track_id: track_id_for_progress.clone(),
+                    percent,
+                    tokens_generated,
+                    tokens_estimated,
+                    eta_sec,
+                },
+            );
+        }
+
+        // Also report at 100% (though capped at 99 by ProgressTracker until complete)
+        if current == total {
+            let (percent, tokens_generated, tokens_estimated, eta_sec) = tracker.get_progress();
+            send_notification(
+                "generation_progress",
+                GenerationProgressParams {
+                    track_id: track_id_for_progress.clone(),
+                    percent,
+                    tokens_generated,
+                    tokens_estimated,
+                    eta_sec,
+                },
+            );
+        }
+    }) {
         Ok(samples) => {
             let generation_time = start_time.elapsed().as_secs_f32();
             let actual_duration = samples.len() as f32 / SAMPLE_RATE as f32;

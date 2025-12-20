@@ -76,6 +76,27 @@ impl MusicGenDecoder {
         encoder_attention_mask: DynValue,
         max_len: usize,
     ) -> Result<VecDeque<[i64; 4]>> {
+        self.generate_tokens_with_progress(encoder_hidden_states, encoder_attention_mask, max_len, |_, _| {})
+    }
+
+    /// Generates tokens autoregressively with a progress callback.
+    ///
+    /// # Arguments
+    ///
+    /// * `encoder_hidden_states` - Encoded text embeddings
+    /// * `encoder_attention_mask` - Attention mask for encoder
+    /// * `max_len` - Number of output tokens desired
+    /// * `on_progress` - Callback receiving (tokens_generated, total_tokens)
+    pub fn generate_tokens_with_progress<F>(
+        &mut self,
+        encoder_hidden_states: DynValue,
+        encoder_attention_mask: DynValue,
+        max_len: usize,
+        on_progress: F,
+    ) -> Result<VecDeque<[i64; 4]>>
+    where
+        F: Fn(usize, usize),
+    {
         // Compensate for delay pattern: we need N-1 extra tokens (where N=4 codebooks)
         // to get the desired number of output tokens
         let generation_len = max_len + 3;
@@ -127,16 +148,16 @@ impl MusicGenDecoder {
         // Extract KV cache from first pass
         let mut kv_cache: Vec<(String, DynValue)> = Vec::new();
         for j in 0..num_hidden_layers {
-            let dk = outputs.remove(&format!("present.{j}.decoder.key")).ok_or_else(|| {
+            let dk = outputs.remove(format!("present.{j}.decoder.key")).ok_or_else(|| {
                 DaemonError::model_inference_failed(format!("present.{j}.decoder.key not found"))
             })?;
-            let dv = outputs.remove(&format!("present.{j}.decoder.value")).ok_or_else(|| {
+            let dv = outputs.remove(format!("present.{j}.decoder.value")).ok_or_else(|| {
                 DaemonError::model_inference_failed(format!("present.{j}.decoder.value not found"))
             })?;
-            let ek = outputs.remove(&format!("present.{j}.encoder.key")).ok_or_else(|| {
+            let ek = outputs.remove(format!("present.{j}.encoder.key")).ok_or_else(|| {
                 DaemonError::model_inference_failed(format!("present.{j}.encoder.key not found"))
             })?;
-            let ev = outputs.remove(&format!("present.{j}.encoder.value")).ok_or_else(|| {
+            let ev = outputs.remove(format!("present.{j}.encoder.value")).ok_or_else(|| {
                 DaemonError::model_inference_failed(format!("present.{j}.encoder.value not found"))
             })?;
 
@@ -159,7 +180,9 @@ impl MusicGenDecoder {
         let mut results = VecDeque::new();
 
         // Run autoregressive generation
-        for _ in 0..generation_len {
+        for i in 0..generation_len {
+            // Call progress callback with current token count
+            on_progress(i, generation_len);
             let [a, b, c, d] = delay_pattern_mask_ids.last_delayed_masked(pad_token_id);
 
             // Create new input_ids
@@ -202,10 +225,10 @@ impl MusicGenDecoder {
             // Update KV cache (only decoder keys/values change)
             let num_layers = kv_cache.len() / 4;
             for j in 0..num_layers {
-                let dk = outputs.remove(&format!("present.{j}.decoder.key")).ok_or_else(|| {
+                let dk = outputs.remove(format!("present.{j}.decoder.key")).ok_or_else(|| {
                     DaemonError::model_inference_failed(format!("present.{j}.decoder.key not found"))
                 })?;
-                let dv = outputs.remove(&format!("present.{j}.decoder.value")).ok_or_else(|| {
+                let dv = outputs.remove(format!("present.{j}.decoder.value")).ok_or_else(|| {
                     DaemonError::model_inference_failed(format!("present.{j}.decoder.value not found"))
                 })?;
 
@@ -213,6 +236,9 @@ impl MusicGenDecoder {
                 kv_cache[j * 4 + 1] = (format!("past_key_values.{j}.decoder.value"), dv);
             }
         }
+
+        // Final progress callback
+        on_progress(generation_len, generation_len);
 
         Ok(results)
     }
@@ -244,7 +270,7 @@ where
     new_shape[0] *= 2;
 
     let zeros = vec![T::default(); data.len()];
-    let combined: Vec<T> = data.into_iter().chain(zeros.into_iter()).collect();
+    let combined: Vec<T> = data.into_iter().chain(zeros).collect();
 
     let result = Tensor::from_array((new_shape, combined)).map_err(|e| {
         DaemonError::model_inference_failed(format!("Failed to create duplicated tensor: {}", e))
@@ -265,7 +291,7 @@ fn duplicate_with_zeros_i64(tensor: &DynValue) -> Result<DynValue> {
     new_shape[0] *= 2;
 
     let zeros = vec![0i64; data.len()];
-    let combined: Vec<i64> = data.into_iter().chain(zeros.into_iter()).collect();
+    let combined: Vec<i64> = data.into_iter().chain(zeros).collect();
 
     let result = Tensor::from_array((new_shape, combined)).map_err(|e| {
         DaemonError::model_inference_failed(format!("Failed to create duplicated i64 tensor: {}", e))

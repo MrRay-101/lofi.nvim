@@ -246,11 +246,11 @@ fn generate_uuid_v4() -> String {
 
     // Create pseudo-random bytes from time components
     let bytes: [u8; 16] = [
-        (nanos >> 0) as u8,
+        nanos as u8,
         (nanos >> 8) as u8,
         (nanos >> 16) as u8,
         (nanos >> 24) as u8,
-        (secs >> 0) as u8,
+        secs as u8,
         (secs >> 8) as u8,
         0x40 | ((nanos >> 32) as u8 & 0x0f), // Version 4
         (nanos >> 40) as u8,

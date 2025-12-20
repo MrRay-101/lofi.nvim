@@ -159,23 +159,23 @@ Based on plan.md structure:
 
 ### Progress Calculation
 
-- [ ] T042 [US2] Create progress calculator with ProgressTracker struct, update(tokens_generated), get_percent(), get_eta() computing tokens_estimated = duration * 50 in daemon/src/generation/progress.rs
-- [ ] T043 [US2] Create GenerationProgressNotification struct with track_id, percent, tokens_generated, tokens_estimated, eta_sec per contracts/notifications.json in daemon/src/rpc/types.rs
+- [x] T042 [US2] Create progress calculator with ProgressTracker struct, update(tokens_generated), get_percent(), get_eta() computing tokens_estimated = duration * 50 in daemon/src/generation/progress.rs
+- [x] T043 [US2] Create GenerationProgressNotification struct with track_id, percent, tokens_generated, tokens_estimated, eta_sec per contracts/notifications.json in daemon/src/rpc/types.rs
 
 ### Progress Streaming
 
-- [ ] T044 [US2] Update generation pipeline to accept progress_callback, call every 5% increment in daemon/src/generation/pipeline.rs
-- [ ] T045 [US2] Create send_notification(notification) function writing JSON-RPC notification to stdout in daemon/src/rpc/server.rs
-- [ ] T046 [US2] Integrate progress notifications into generate method handler, sending generation_progress every 5% in daemon/src/rpc/methods.rs
-- [ ] T047 [US2] Add generation_complete and generation_error notifications on completion/failure in daemon/src/rpc/methods.rs
-- [ ] T048 [US2] Update generation module re-exporting progress in daemon/src/generation/mod.rs
+- [x] T044 [US2] Update generation pipeline to accept progress_callback, call every 5% increment in daemon/src/generation/pipeline.rs
+- [x] T045 [US2] Create send_notification(notification) function writing JSON-RPC notification to stdout in daemon/src/rpc/server.rs
+- [x] T046 [US2] Integrate progress notifications into generate method handler, sending generation_progress every 5% in daemon/src/rpc/methods.rs
+- [x] T047 [US2] Add generation_complete and generation_error notifications on completion/failure in daemon/src/rpc/methods.rs
+- [x] T048 [US2] Update generation module re-exporting progress in daemon/src/generation/mod.rs
 
 ### User Story 2 Verification (MANDATORY - Principle VI)
 
-- [ ] V018 [VERIFY] Run `cargo build --release` - must succeed with zero errors
-- [ ] V019 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [ ] V020 [VERIFY] Test progress: initiate generation, verify ~20 progress notifications received
-- [ ] V021 [VERIFY] Verify progress percent capped at 99 until generation_complete
+- [x] V018 [VERIFY] Run `cargo build --release` - must succeed with zero errors
+- [x] V019 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [x] V020 [VERIFY] Test progress: initiate generation, verify ~20 progress notifications received
+- [x] V021 [VERIFY] Verify progress percent capped at 99 until generation_complete
 
 ---
 

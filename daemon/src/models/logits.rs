@@ -83,7 +83,7 @@ impl Logits {
     ///
     /// Panics if the first dimension is not even.
     pub fn apply_free_guidance(self, guidance_scale: usize) -> Self {
-        if self.0.dim().0 % 2 != 0 {
+        if !self.0.dim().0.is_multiple_of(2) {
             panic!("In order to apply free guidance to the logits, the first size of the first dimension must be even")
         }
 

@@ -42,7 +42,7 @@ impl Device {
     }
 
     /// Parses a device from a string.
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "auto" => Some(Device::Auto),
             "cpu" => Some(Device::Cpu),
@@ -170,12 +170,12 @@ mod tests {
 
     #[test]
     fn device_parsing() {
-        assert_eq!(Device::from_str("auto"), Some(Device::Auto));
-        assert_eq!(Device::from_str("CPU"), Some(Device::Cpu));
-        assert_eq!(Device::from_str("cuda"), Some(Device::Cuda));
-        assert_eq!(Device::from_str("metal"), Some(Device::Metal));
-        assert_eq!(Device::from_str("coreml"), Some(Device::Metal));
-        assert_eq!(Device::from_str("invalid"), None);
+        assert_eq!(Device::parse("auto"), Some(Device::Auto));
+        assert_eq!(Device::parse("CPU"), Some(Device::Cpu));
+        assert_eq!(Device::parse("cuda"), Some(Device::Cuda));
+        assert_eq!(Device::parse("metal"), Some(Device::Metal));
+        assert_eq!(Device::parse("coreml"), Some(Device::Metal));
+        assert_eq!(Device::parse("invalid"), None);
     }
 
     #[test]

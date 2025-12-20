@@ -79,6 +79,7 @@ where
 /// Generates audio using pre-loaded models.
 ///
 /// This is useful for batch generation where models should be loaded once.
+/// The callback receives (tokens_generated, tokens_total) on every token.
 pub fn generate_with_models<F>(
     models: &mut MusicGenModels,
     prompt: &str,
@@ -95,15 +96,17 @@ where
 
     eprintln!("Generating {} tokens...", max_tokens);
 
-    // Step 2: Generate tokens autoregressively
-    let tokens = models.decoder.generate_tokens(
+    // Step 2: Generate tokens autoregressively with progress
+    // The on_progress callback is called for every token, allowing the caller
+    // to filter by 5% increments using ProgressTracker
+    let tokens = models.decoder.generate_tokens_with_progress(
         encoder_hidden_states,
         encoder_attention_mask,
         max_tokens,
+        &on_progress,
     )?;
 
     let token_count = tokens.len();
-    on_progress(token_count, max_tokens);
 
     eprintln!("Generated {} tokens, decoding audio...", token_count);
 
