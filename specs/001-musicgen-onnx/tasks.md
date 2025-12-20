@@ -26,17 +26,17 @@ Based on plan.md structure:
 
 **Purpose**: Create project structure and configure dependencies per plan.md
 
-- [ ] T001 Create daemon directory structure with `mkdir -p daemon/src/{rpc,generation,models,audio,cache}`
-- [ ] T002 Initialize Rust project with `cargo init --name lofi-daemon` in daemon/
-- [ ] T003 Configure Cargo.toml with dependencies from research.md: ort 2.0.0-rc.9, ndarray 0.16.1, tokenizers 0.19.1, half 2.4.1, hound 3.5.1, reqwest, tokio, serde, serde_json, sha2, clap, anyhow, directories in daemon/Cargo.toml
-- [ ] T004 [P] Create Lua plugin directory structure with `mkdir -p lua/lofi`
-- [ ] T005 [P] Add .gitignore entries for target/, *.onnx, and cache directories
+- [x] T001 Create daemon directory structure with `mkdir -p daemon/src/{rpc,generation,models,audio,cache}`
+- [x] T002 Initialize Rust project with `cargo init --name lofi-daemon` in daemon/
+- [x] T003 Configure Cargo.toml with dependencies from research.md: ort 2.0.0-rc.9, ndarray 0.16.1, tokenizers 0.19.1, half 2.4.1, hound 3.5.1, reqwest, tokio, serde, serde_json, sha2, clap, anyhow, directories in daemon/Cargo.toml
+- [x] T004 [P] Create Lua plugin directory structure with `mkdir -p lua/lofi`
+- [x] T005 [P] Add .gitignore entries for target/, *.onnx, and cache directories
 
 ### Phase 1 Verification (MANDATORY - Principle VI)
 
-- [ ] V001 [VERIFY] Run `cargo check` in daemon/ - must succeed with zero errors
-- [ ] V002 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [ ] V003 [VERIFY] Confirm daemon/Cargo.toml exists and contains all required dependencies
+- [x] V001 [VERIFY] Run `cargo check` in daemon/ - must succeed with zero errors
+- [x] V002 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [x] V003 [VERIFY] Confirm daemon/Cargo.toml exists and contains all required dependencies
 
 ---
 

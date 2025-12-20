@@ -1,0 +1,33 @@
+# Rust build artifacts
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+Cargo.lock
+
+# ONNX model files (downloaded separately)
+*.onnx
+
+# Cache directories
+.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# macOS
+.DS_Store
+
+# Test outputs
+test_output.wav
+test.wav
