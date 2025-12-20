@@ -8,6 +8,7 @@ use std::collections::VecDeque;
 use std::path::Path;
 
 use half::f16;
+use ort::execution_providers::ExecutionProviderDispatch;
 use ort::session::{Session, SessionInputValue};
 use ort::value::{DynValue, Tensor};
 
@@ -30,25 +31,55 @@ impl MusicGenDecoder {
     ///
     /// Expects `decoder_model.onnx` and `decoder_with_past_model.onnx` in the directory.
     pub fn load(model_dir: &Path, config: ModelConfig) -> Result<Self> {
+        Self::load_with_providers(model_dir, config, &[])
+    }
+
+    /// Loads the decoder models from a directory with specific execution providers.
+    ///
+    /// Expects `decoder_model.onnx` and `decoder_with_past_model.onnx` in the directory.
+    pub fn load_with_providers(
+        model_dir: &Path,
+        config: ModelConfig,
+        providers: &[ExecutionProviderDispatch],
+    ) -> Result<Self> {
         let decoder_path = model_dir.join("decoder_model.onnx");
         let decoder_with_past_path = model_dir.join("decoder_with_past_model.onnx");
 
-        let decoder_model = Session::builder()
-            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?
-            .commit_from_file(&decoder_path)
-            .map_err(|e| {
-                DaemonError::model_load_failed(format!("Failed to load decoder_model.onnx: {}", e))
-            })?;
+        let mut decoder_builder = Session::builder()
+            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?;
 
-        let decoder_with_past = Session::builder()
-            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?
-            .commit_from_file(&decoder_with_past_path)
-            .map_err(|e| {
-                DaemonError::model_load_failed(format!(
-                    "Failed to load decoder_with_past_model.onnx: {}",
-                    e
-                ))
-            })?;
+        if !providers.is_empty() {
+            decoder_builder = decoder_builder
+                .with_execution_providers(providers)
+                .map_err(|e| {
+                    DaemonError::model_load_failed(format!("Failed to set execution providers: {}", e))
+                })?;
+        }
+
+        let decoder_model = decoder_builder.commit_from_file(&decoder_path).map_err(|e| {
+            DaemonError::model_load_failed(format!("Failed to load decoder_model.onnx: {}", e))
+        })?;
+
+        let mut decoder_with_past_builder = Session::builder()
+            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?;
+
+        if !providers.is_empty() {
+            decoder_with_past_builder = decoder_with_past_builder
+                .with_execution_providers(providers)
+                .map_err(|e| {
+                    DaemonError::model_load_failed(format!("Failed to set execution providers: {}", e))
+                })?;
+        }
+
+        let decoder_with_past =
+            decoder_with_past_builder
+                .commit_from_file(&decoder_with_past_path)
+                .map_err(|e| {
+                    DaemonError::model_load_failed(format!(
+                        "Failed to load decoder_with_past_model.onnx: {}",
+                        e
+                    ))
+                })?;
 
         // Detect if using fp16 by checking model path
         let use_fp16 = model_dir

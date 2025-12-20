@@ -6,6 +6,7 @@ use std::collections::VecDeque;
 use std::path::Path;
 
 use half::f16;
+use ort::execution_providers::ExecutionProviderDispatch;
 use ort::session::Session;
 use ort::value::{DynValue, Tensor};
 
@@ -21,17 +22,30 @@ impl MusicGenAudioCodec {
     ///
     /// Expects `encodec_decode.onnx` in the directory.
     pub fn load(model_dir: &Path) -> Result<Self> {
+        Self::load_with_providers(model_dir, &[])
+    }
+
+    /// Loads the audio codec from a directory with specific execution providers.
+    ///
+    /// Expects `encodec_decode.onnx` in the directory.
+    pub fn load_with_providers(
+        model_dir: &Path,
+        providers: &[ExecutionProviderDispatch],
+    ) -> Result<Self> {
         let codec_path = model_dir.join("encodec_decode.onnx");
 
-        let audio_codec = Session::builder()
-            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?
-            .commit_from_file(&codec_path)
-            .map_err(|e| {
-                DaemonError::model_load_failed(format!(
-                    "Failed to load encodec_decode.onnx: {}",
-                    e
-                ))
+        let mut builder = Session::builder()
+            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?;
+
+        if !providers.is_empty() {
+            builder = builder.with_execution_providers(providers).map_err(|e| {
+                DaemonError::model_load_failed(format!("Failed to set execution providers: {}", e))
             })?;
+        }
+
+        let audio_codec = builder.commit_from_file(&codec_path).map_err(|e| {
+            DaemonError::model_load_failed(format!("Failed to load encodec_decode.onnx: {}", e))
+        })?;
 
         Ok(Self { audio_codec })
     }

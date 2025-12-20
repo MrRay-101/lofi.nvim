@@ -4,11 +4,13 @@
 
 use std::path::Path;
 
+use crate::config::Device;
 use crate::error::{DaemonError, Result};
 use crate::types::ModelConfig;
 
 use super::audio_codec::MusicGenAudioCodec;
 use super::decoder::MusicGenDecoder;
+use super::device::{get_device_name, get_providers};
 use super::text_encoder::MusicGenTextEncoder;
 
 /// Complete set of loaded MusicGen models.
@@ -23,12 +25,19 @@ pub struct MusicGenModels {
     pub config: ModelConfig,
     /// Model version string.
     pub version: String,
+    /// Active device name.
+    pub device_name: String,
 }
 
 impl MusicGenModels {
     /// Returns the model version string.
     pub fn version(&self) -> &str {
         &self.version
+    }
+
+    /// Returns the active device name.
+    pub fn device_name(&self) -> &str {
+        &self.device_name
     }
 }
 
@@ -77,20 +86,51 @@ pub fn check_models(model_dir: &Path) -> Result<()> {
 /// Optionally:
 /// - `config.json` - Model configuration (uses defaults if not present)
 pub fn load_sessions(model_dir: &Path) -> Result<MusicGenModels> {
+    load_sessions_with_device(model_dir, Device::Auto, None)
+}
+
+/// Loads all MusicGen model sessions from a directory with specific device configuration.
+///
+/// # Arguments
+///
+/// * `model_dir` - Directory containing model files
+/// * `device` - Device to use for inference (Auto, Cpu, Cuda, Metal)
+/// * `threads` - Optional number of threads for CPU execution
+///
+/// The directory should contain:
+/// - `tokenizer.json` - HuggingFace tokenizer
+/// - `text_encoder.onnx` - T5 text encoder
+/// - `decoder_model.onnx` - First pass decoder
+/// - `decoder_with_past_model.onnx` - Decoder with KV cache
+/// - `encodec_decode.onnx` - EnCodec audio decoder
+///
+/// Optionally:
+/// - `config.json` - Model configuration (uses defaults if not present)
+pub fn load_sessions_with_device(
+    model_dir: &Path,
+    device: Device,
+    threads: Option<u32>,
+) -> Result<MusicGenModels> {
     // Check all required files exist first
     check_models(model_dir)?;
 
+    // Get execution providers for the device
+    let providers = get_providers(device, threads);
+    let device_name = get_device_name(device).to_string();
+
+    eprintln!("Using device: {}", device_name);
+
     eprintln!("Loading text encoder...");
-    let text_encoder = MusicGenTextEncoder::load(model_dir)?;
+    let text_encoder = MusicGenTextEncoder::load_with_providers(model_dir, &providers)?;
 
     // Load or create config
     let config = load_or_default_config(model_dir)?;
 
     eprintln!("Loading decoder models...");
-    let decoder = MusicGenDecoder::load(model_dir, config.clone())?;
+    let decoder = MusicGenDecoder::load_with_providers(model_dir, config.clone(), &providers)?;
 
     eprintln!("Loading audio codec...");
-    let audio_codec = MusicGenAudioCodec::load(model_dir)?;
+    let audio_codec = MusicGenAudioCodec::load_with_providers(model_dir, &providers)?;
 
     // Determine version from directory name or default
     let version = detect_model_version(model_dir);
@@ -103,6 +143,7 @@ pub fn load_sessions(model_dir: &Path) -> Result<MusicGenModels> {
         audio_codec,
         config,
         version,
+        device_name,
     })
 }
 

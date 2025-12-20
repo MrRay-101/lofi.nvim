@@ -219,22 +219,22 @@ Based on plan.md structure:
 
 ### Device Detection
 
-- [ ] T056 [US4] Create device detection with detect_available_providers() -> Vec<ExecutionProvider> checking CUDA, CoreML availability in daemon/src/models/device.rs
-- [ ] T057 [US4] Create execution provider selection with get_providers(device: Device) -> Vec<ExecutionProvider> per research.md D9 in daemon/src/models/device.rs
+- [x] T056 [US4] Create device detection with detect_available_providers() -> Vec<ExecutionProvider> checking CUDA, CoreML availability in daemon/src/models/device.rs
+- [x] T057 [US4] Create execution provider selection with get_providers(device: Device) -> Vec<ExecutionProvider> per research.md D9 in daemon/src/models/device.rs
 
 ### Configuration Integration
 
-- [ ] T058 [US4] Update model loader to accept device config, configure ONNX sessions with selected execution providers in daemon/src/models/loader.rs
-- [ ] T059 [US4] Add threads configuration support for CPU execution provider in daemon/src/models/loader.rs
-- [ ] T060 [US4] Update config module to load device/threads from environment or config file in daemon/src/config.rs
-- [ ] T061 [US4] Update models module re-exporting device in daemon/src/models/mod.rs
+- [x] T058 [US4] Update model loader to accept device config, configure ONNX sessions with selected execution providers in daemon/src/models/loader.rs
+- [x] T059 [US4] Add threads configuration support for CPU execution provider in daemon/src/models/loader.rs
+- [x] T060 [US4] Update config module to load device/threads from environment or config file in daemon/src/config.rs
+- [x] T061 [US4] Update models module re-exporting device in daemon/src/models/mod.rs
 
 ### User Story 4 Verification (MANDATORY - Principle VI)
 
-- [ ] V026 [VERIFY] Run `cargo build --release` - must succeed with zero errors
-- [ ] V027 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [ ] V028 [VERIFY] Test device auto: verify detection runs without error
-- [ ] V029 [VERIFY] Test device cpu: verify explicit CPU selection works
+- [x] V026 [VERIFY] Run `cargo build --release` - must succeed with zero errors
+- [x] V027 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [x] V028 [VERIFY] Test device auto: verify detection runs without error
+- [x] V029 [VERIFY] Test device cpu: verify explicit CPU selection works
 
 ---
 

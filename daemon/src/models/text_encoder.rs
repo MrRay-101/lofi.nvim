@@ -4,6 +4,7 @@
 
 use std::path::Path;
 
+use ort::execution_providers::ExecutionProviderDispatch;
 use ort::session::Session;
 use ort::value::{DynValue, Tensor};
 use tokenizers::Tokenizer;
@@ -21,6 +22,17 @@ impl MusicGenTextEncoder {
     ///
     /// Loads `tokenizer.json` and `text_encoder.onnx` from the given directory.
     pub fn load(model_dir: &Path) -> Result<Self> {
+        Self::load_with_providers(model_dir, &[])
+    }
+
+    /// Creates a new text encoder from model directory with specific execution providers.
+    ///
+    /// Loads `tokenizer.json` and `text_encoder.onnx` from the given directory,
+    /// using the provided execution providers for the ONNX session.
+    pub fn load_with_providers(
+        model_dir: &Path,
+        providers: &[ExecutionProviderDispatch],
+    ) -> Result<Self> {
         let tokenizer_path = model_dir.join("tokenizer.json");
         let encoder_path = model_dir.join("text_encoder.onnx");
 
@@ -35,15 +47,18 @@ impl MusicGenTextEncoder {
                 DaemonError::model_load_failed(format!("Failed to configure tokenizer: {}", e))
             })?;
 
-        let text_encoder = Session::builder()
-            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?
-            .commit_from_file(&encoder_path)
-            .map_err(|e| {
-                DaemonError::model_load_failed(format!(
-                    "Failed to load text_encoder.onnx: {}",
-                    e
-                ))
+        let mut builder = Session::builder()
+            .map_err(|e| DaemonError::model_load_failed(format!("Failed to create session: {}", e)))?;
+
+        if !providers.is_empty() {
+            builder = builder.with_execution_providers(providers).map_err(|e| {
+                DaemonError::model_load_failed(format!("Failed to set execution providers: {}", e))
             })?;
+        }
+
+        let text_encoder = builder.commit_from_file(&encoder_path).map_err(|e| {
+            DaemonError::model_load_failed(format!("Failed to load text_encoder.onnx: {}", e))
+        })?;
 
         Ok(Self {
             tokenizer,

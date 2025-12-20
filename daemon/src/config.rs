@@ -87,6 +87,43 @@ impl DaemonConfig {
         Self::default()
     }
 
+    /// Creates a DaemonConfig from environment variables.
+    ///
+    /// Reads the following environment variables:
+    /// - `LOFI_MODEL_PATH` - Path to model directory
+    /// - `LOFI_CACHE_PATH` - Path to cache directory
+    /// - `LOFI_DEVICE` - Device selection (auto, cpu, cuda, metal)
+    /// - `LOFI_THREADS` - Number of threads for CPU execution
+    ///
+    /// Falls back to defaults for unset variables.
+    pub fn from_env() -> Self {
+        let mut config = Self::default();
+
+        if let Ok(path) = std::env::var("LOFI_MODEL_PATH") {
+            config.model_path = Some(PathBuf::from(path));
+        }
+
+        if let Ok(path) = std::env::var("LOFI_CACHE_PATH") {
+            config.cache_path = Some(PathBuf::from(path));
+        }
+
+        if let Ok(device_str) = std::env::var("LOFI_DEVICE") {
+            if let Some(device) = Device::parse(&device_str) {
+                config.device = device;
+            }
+        }
+
+        if let Ok(threads_str) = std::env::var("LOFI_THREADS") {
+            if let Ok(threads) = threads_str.parse::<u32>() {
+                if threads > 0 {
+                    config.threads = Some(threads);
+                }
+            }
+        }
+
+        config
+    }
+
     /// Returns the effective model path, using platform defaults if not specified.
     pub fn effective_model_path(&self) -> PathBuf {
         if let Some(ref path) = self.model_path {
@@ -205,5 +242,14 @@ mod tests {
         // Paths should be non-empty
         assert!(!model_path.as_os_str().is_empty());
         assert!(!cache_path.as_os_str().is_empty());
+    }
+
+    #[test]
+    fn from_env_defaults() {
+        // When no env vars are set, should use defaults
+        // Note: This test doesn't set any env vars so we get defaults
+        let config = DaemonConfig::from_env();
+        assert_eq!(config.device, Device::Auto);
+        assert!(config.threads.is_none());
     }
 }
