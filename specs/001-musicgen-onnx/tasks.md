@@ -57,9 +57,9 @@ Based on plan.md structure:
 
 ### Phase 2 Verification (MANDATORY - Principle VI)
 
-- [x] V004 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
-- [x] V005 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [x] V006 [VERIFY] Confirm all types/mod.rs exports are imported in lib.rs
+- [ ] V004 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
+- [ ] V005 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [ ] V006 [VERIFY] Confirm all types/mod.rs exports are imported in lib.rs
 
 ---
 
