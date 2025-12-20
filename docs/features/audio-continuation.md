@@ -6,6 +6,8 @@ MusicGen's position embeddings limit generation to ~40 seconds (2048 tokens at 5
 
 **Reference**: Meta's AudioCraft uses this technique - generate 30s windows, slide by 10s, keep 20s of overlap as audio conditioning.
 
+**Local Reference**: `../audiocraft` (clone https://github.com/facebookresearch/audiocraft)
+
 ## Constitution Alignment
 
 - Principle II (Local & Private): continuation runs locally, no external services
