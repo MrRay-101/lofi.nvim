@@ -639,6 +639,38 @@ pub struct GetBackendsResult {
     pub default_backend: String,
 }
 
+// ============================================================================
+// download_backend Request/Response
+// ============================================================================
+
+/// Parameters for a download_backend request.
+#[derive(Debug, Deserialize)]
+pub struct DownloadBackendParams {
+    /// Backend to download models for ("musicgen" or "ace_step").
+    pub backend: String,
+}
+
+impl DownloadBackendParams {
+    /// Parses and validates the backend parameter.
+    pub fn validate(&self) -> Result<Backend, JsonRpcError> {
+        Backend::parse(&self.backend)
+            .ok_or_else(|| JsonRpcError::invalid_backend(&self.backend))
+    }
+}
+
+/// Response for a download_backend request.
+#[derive(Debug, Serialize)]
+pub struct DownloadBackendResult {
+    /// Backend that was downloaded.
+    pub backend: String,
+
+    /// Status of the download.
+    pub status: String,
+
+    /// Number of files downloaded.
+    pub files_downloaded: usize,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

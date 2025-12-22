@@ -19,7 +19,9 @@ pub mod musicgen;
 pub use ace_step::AceStepModels;
 pub use backend::{Backend, GenerateDispatchParams, LoadedModels};
 pub use device::{detect_available_providers, get_device_name, get_providers, AvailableProvider};
-pub use downloader::{ensure_ace_step_models, ensure_models};
+pub use downloader::{
+    download_backend_with_progress, ensure_ace_step_models, ensure_models, DownloadProgressCallback,
+};
 pub use loader::{check_backend_available, detect_available_backends, load_backend};
 pub use musicgen::{
     check_models, detect_model_version, generate_model_version, load_sessions,

@@ -7,16 +7,16 @@ use std::time::Instant;
 
 use crate::audio::write_wav;
 use crate::models::{
-    check_backend_available, ensure_ace_step_models, ensure_models, load_backend, Backend,
-    GenerateDispatchParams,
+    check_backend_available, download_backend_with_progress, ensure_ace_step_models, ensure_models,
+    load_backend, Backend, GenerateDispatchParams,
 };
 use crate::types::{compute_track_id, GenerationJob, JobPriority, Track};
 
 use super::server::{send_notification, ServerState};
 use super::types::{
-    BackendInfo, BackendStatus, GenerateParams, GenerateResult, GenerationCompleteParams,
-    GenerationErrorParams, GenerationProgressParams, GenerationStatus, GetBackendsResult,
-    JsonRpcError, Priority,
+    BackendInfo, BackendStatus, DownloadBackendParams, DownloadBackendResult, DownloadProgressParams,
+    GenerateParams, GenerateResult, GenerationCompleteParams, GenerationErrorParams,
+    GenerationProgressParams, GenerationStatus, GetBackendsResult, JsonRpcError, Priority,
 };
 
 /// Handles a JSON-RPC method call.
@@ -28,6 +28,7 @@ pub fn handle_request(
     match method {
         "generate" => handle_generate(params, state),
         "get_backends" => handle_get_backends(state),
+        "download_backend" => handle_download_backend(params, state),
         "ping" => handle_ping(),
         "shutdown" => handle_shutdown(state),
         _ => Err(JsonRpcError::method_not_found(method)),
@@ -475,6 +476,83 @@ fn handle_get_backends(state: &ServerState) -> Result<serde_json::Value, JsonRpc
     };
 
     Ok(serde_json::to_value(result).unwrap())
+}
+
+/// Handles the download_backend method.
+///
+/// Downloads model files for the specified backend, emitting progress notifications
+/// as files are downloaded. Supports resuming partial downloads.
+fn handle_download_backend(
+    params: serde_json::Value,
+    state: &mut ServerState,
+) -> Result<serde_json::Value, JsonRpcError> {
+    // Parse and validate parameters
+    let params: DownloadBackendParams = serde_json::from_value(params)
+        .map_err(|e| JsonRpcError::invalid_params(format!("Invalid params: {}", e)))?;
+
+    let backend = params.validate()?;
+
+    // Check if already downloading
+    if state.backend_status.get(backend) == BackendStatus::Downloading {
+        return Ok(serde_json::to_value(DownloadBackendResult {
+            backend: backend.as_str().to_string(),
+            status: "already_downloading".to_string(),
+            files_downloaded: 0,
+        })
+        .unwrap());
+    }
+
+    // Check if already installed
+    let model_dir = match backend {
+        Backend::MusicGen => state.config.effective_model_path(),
+        Backend::AceStep => state.config.effective_ace_step_model_path(),
+    };
+
+    if check_backend_available(backend, &model_dir) {
+        return Ok(serde_json::to_value(DownloadBackendResult {
+            backend: backend.as_str().to_string(),
+            status: "already_installed".to_string(),
+            files_downloaded: 0,
+        })
+        .unwrap());
+    }
+
+    // Update status to downloading
+    state.backend_status.set(backend, BackendStatus::Downloading);
+
+    // Create progress callback that sends notifications
+    let on_progress = Box::new(move |file_name: &str, bytes_downloaded: u64, bytes_total: u64, files_completed: usize, files_total: usize| {
+        send_notification(
+            "download_progress",
+            DownloadProgressParams {
+                file_name: file_name.to_string(),
+                bytes_downloaded,
+                bytes_total,
+                files_completed,
+                files_total,
+            },
+        );
+    });
+
+    // Perform download
+    match download_backend_with_progress(backend, &model_dir, Some(on_progress)) {
+        Ok(()) => {
+            state.backend_status.set(backend, BackendStatus::Ready);
+            Ok(serde_json::to_value(DownloadBackendResult {
+                backend: backend.as_str().to_string(),
+                status: "complete".to_string(),
+                files_downloaded: match backend {
+                    Backend::MusicGen => 6, // Number of MusicGen files
+                    Backend::AceStep => 7,   // Number of ACE-Step files
+                },
+            })
+            .unwrap())
+        }
+        Err(e) => {
+            state.backend_status.set(backend, BackendStatus::Error);
+            Err(JsonRpcError::model_download_failed(e.to_string()))
+        }
+    }
 }
 
 #[cfg(test)]

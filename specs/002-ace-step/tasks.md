@@ -148,20 +148,20 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Add ACE-Step model URLs (https://huggingface.co/willibrandon/lofi-models/resolve/main/ace-step/) to daemon/src/models/downloader.rs
-- [ ] T053 [US3] Implement download_ace_step_models() in daemon/src/models/downloader.rs
-- [ ] T054 [US3] Add download_backend RPC method in daemon/src/rpc/methods.rs
-- [ ] T055 [US3] Implement download progress tracking in daemon/src/models/downloader.rs
-- [ ] T056 [US3] Add download_progress notification in daemon/src/rpc/methods.rs
-- [ ] T057 [US3] Handle partial download resume in daemon/src/models/downloader.rs
-- [ ] T058 [US3] Update BackendStatus enum with Downloading state in daemon/src/models/backend.rs
+- [X] T052 [US3] Add ACE-Step model URLs (https://huggingface.co/willibrandon/lofi-models/resolve/main/ace-step/) to daemon/src/models/downloader.rs
+- [X] T053 [US3] Implement download_ace_step_models() in daemon/src/models/downloader.rs
+- [X] T054 [US3] Add download_backend RPC method in daemon/src/rpc/methods.rs
+- [X] T055 [US3] Implement download progress tracking in daemon/src/models/downloader.rs
+- [X] T056 [US3] Add download_progress notification in daemon/src/rpc/methods.rs
+- [X] T057 [US3] Handle partial download resume in daemon/src/models/downloader.rs
+- [X] T058 [US3] Update BackendStatus enum with Downloading state in daemon/src/models/backend.rs
 
 ### User Story 3 Verification (MANDATORY - Principle VI)
 
-- [ ] V017 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
-- [ ] V018 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/models/downloader.rs` - must return empty
-- [ ] V019 [VERIFY] download_backend RPC starts download and emits progress
-- [ ] V020 [VERIFY] Models downloaded to ~/.cache/lofi.nvim/ace-step/
+- [X] V017 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
+- [X] V018 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/models/downloader.rs` - must return empty
+- [X] V019 [VERIFY] download_backend RPC starts download and emits progress
+- [X] V020 [VERIFY] Models downloaded to ~/.cache/lofi.nvim/ace-step/
 
 ---
 
