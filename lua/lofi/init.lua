@@ -17,6 +17,7 @@ local state = {
   pending_callbacks = {},       -- Map of track_id -> callback
   initialized = false,          -- True if setup() has been called
   default_backend = nil,        -- Default backend from config ("musicgen" or "ace_step")
+  ui_cleanup = nil,             -- Function to cleanup UI on cancel
 }
 
 --- Map daemon notification methods to event names
@@ -275,6 +276,24 @@ function M.force_stop()
   state.pending_callbacks = {}
 end
 
+--- Cancel in-progress generation by killing the daemon
+function M.cancel()
+  -- Kill daemon process
+  if vim.fn.has("win32") == 1 then
+    vim.fn.system("taskkill /F /IM lofi-daemon.exe")
+  else
+    vim.fn.system("pkill -9 -f lofi-daemon")
+  end
+  -- Cleanup UI
+  if state.ui_cleanup then
+    state.ui_cleanup()
+    state.ui_cleanup = nil
+  end
+  state.generating = false
+  state.current_track_id = nil
+  state.pending_callbacks = {}
+end
+
 --- Register an event handler (convenience wrapper)
 --- @param event string event name from M.EVENTS
 --- @param callback function handler receiving event data
@@ -320,7 +339,11 @@ local function run_generation(prompt, duration, backend)
     if unsub_complete then unsub_complete() end
     if unsub_error then unsub_error() end
     close()
+    state.ui_cleanup = nil
   end
+
+  -- Store cleanup function so cancel can call it
+  state.ui_cleanup = cleanup
 
   unsub_progress = M.on("generation_progress", function(data)
     update("[lofi] " .. data.percent .. "% - " .. prompt)
@@ -420,6 +443,12 @@ end, { desc = "Play last generated track" })
 vim.api.nvim_create_user_command("LofiStop", function()
   vim.fn.jobstart({ "pkill", "-f", "afplay" })
 end, { desc = "Stop playing" })
+
+-- :LofiCancel command
+vim.api.nvim_create_user_command("LofiCancel", function()
+  M.cancel()
+  vim.notify("[lofi] Generation cancelled", vim.log.levels.INFO)
+end, { desc = "Cancel in-progress generation" })
 
 -- Set global for convenience
 _G.lofi = M
