@@ -31,4 +31,6 @@ Cargo.lock
 # Test outputs
 test_output.wav
 test.wav
+ace_step_test.wav
+
 .claude/settings.local.json

@@ -2,7 +2,7 @@
 name = "lofi-daemon"
 version = "0.1.0"
 edition = "2021"
-description = "AI music generation daemon using MusicGen ONNX backend"
+description = "AI music generation daemon with MusicGen and ACE-Step backends"
 license = "MIT"
 
 [dependencies]
@@ -45,6 +45,12 @@ directories = "5"
 
 # Random number generation for sampling
 rand = "0.8"
+
+# ChaCha RNG for reproducible generation
+rand_chacha = "0.3"
+
+# Audio resampling (44.1kHz -> 48kHz)
+rubato = "0.15"
 
 # Hex encoding for track IDs
 hex = "0.4"

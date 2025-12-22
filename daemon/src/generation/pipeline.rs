@@ -1,13 +1,14 @@
-//! Generation pipeline for MusicGen.
+//! Generation pipeline for music backends.
 //!
-//! Orchestrates the text encoder, decoder, and audio codec to generate
-//! audio from text prompts.
+//! Orchestrates the generation process for both MusicGen and ACE-Step backends.
 
 use std::path::Path;
 
+use crate::audio::resample_44100_to_48000;
 use crate::cli::TOKENS_PER_SECOND;
 use crate::error::Result;
-use crate::models::{load_sessions, MusicGenModels};
+use crate::models::ace_step::{self, GenerationParams as AceStepParams, SchedulerType};
+use crate::models::{load_sessions, AceStepModels, MusicGenModels};
 
 /// Generates audio from a text prompt.
 ///
@@ -138,6 +139,57 @@ pub fn estimate_generation_time(token_count: usize) -> f32 {
     // Rough estimate: ~0.1 seconds per token on CPU
     // This is conservative; GPU can be much faster
     token_count as f32 * 0.1
+}
+
+/// Generates audio using pre-loaded ACE-Step models.
+///
+/// # Arguments
+///
+/// * `models` - Loaded ACE-Step models
+/// * `prompt` - Text description of the music to generate
+/// * `duration_sec` - Duration of audio to generate in seconds
+/// * `seed` - Random seed for reproducibility
+/// * `inference_steps` - Number of diffusion steps
+/// * `scheduler` - Scheduler type (euler, heun, pingpong)
+/// * `guidance_scale` - Classifier-free guidance scale
+/// * `on_progress` - Callback receiving (current_step, total_steps)
+///
+/// # Returns
+///
+/// Audio samples at 48kHz sample rate (resampled from 44.1kHz vocoder output).
+pub fn generate_ace_step<F>(
+    models: &mut AceStepModels,
+    prompt: &str,
+    duration_sec: f32,
+    seed: u64,
+    inference_steps: u32,
+    scheduler: &str,
+    guidance_scale: f32,
+    on_progress: F,
+) -> Result<Vec<f32>>
+where
+    F: Fn(usize, usize),
+{
+    // Parse scheduler type
+    let scheduler_type = SchedulerType::parse(scheduler).unwrap_or(SchedulerType::Euler);
+
+    // Create generation parameters
+    let params = AceStepParams {
+        prompt: prompt.to_string(),
+        duration_sec,
+        seed,
+        inference_steps,
+        scheduler: scheduler_type,
+        guidance_scale,
+    };
+
+    // Generate audio at 44.1kHz
+    let samples_44100 = ace_step::generate_with_progress(models, params, on_progress)?;
+
+    // Resample to 48kHz for consistency with lofi.nvim output format
+    let samples_48000 = resample_44100_to_48000(&samples_44100)?;
+
+    Ok(samples_48000)
 }
 
 #[cfg(test)]

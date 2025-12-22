@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::ace_step::AceStepModels;
 use super::musicgen::MusicGenModels;
 
 /// Available music generation backends.
@@ -157,28 +158,7 @@ impl LoadedModels {
     }
 }
 
-/// Placeholder for ACE-Step models.
-///
-/// Will be fully implemented in Phase 3 (User Story 1).
-#[derive(Debug)]
-pub struct AceStepModels {
-    /// Model version string.
-    version: String,
-    /// Device name used for inference.
-    device_name: String,
-}
-
-impl AceStepModels {
-    /// Returns the model version string.
-    pub fn version(&self) -> &str {
-        &self.version
-    }
-
-    /// Returns the device name used for inference.
-    pub fn device_name(&self) -> &str {
-        &self.device_name
-    }
-}
+// AceStepModels is now defined in ace_step::models and re-exported here
 
 #[cfg(test)]
 mod tests {

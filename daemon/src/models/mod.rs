@@ -2,7 +2,7 @@
 //!
 //! This module contains:
 //! - [`musicgen`]: MusicGen ONNX model wrappers for 30-second generation
-//! - [`ace_step`]: ACE-Step ONNX model wrappers for long-form generation (to be implemented)
+//! - [`ace_step`]: ACE-Step ONNX model wrappers for long-form generation
 //! - [`backend`]: Backend abstraction for switching between models
 //! - [`loader`]: Unified model loading for all backends
 //! - [`device`]: Device detection and execution provider selection
@@ -16,9 +16,10 @@ pub mod loader;
 pub mod musicgen;
 
 // Re-export commonly used types from submodules
-pub use backend::{AceStepModels, Backend, LoadedModels};
+pub use ace_step::AceStepModels;
+pub use backend::{Backend, LoadedModels};
 pub use device::{detect_available_providers, get_device_name, get_providers, AvailableProvider};
-pub use downloader::ensure_models;
+pub use downloader::{ensure_ace_step_models, ensure_models};
 pub use loader::{check_backend_available, detect_available_backends, load_backend};
 pub use musicgen::{
     check_models, detect_model_version, generate_model_version, load_sessions,

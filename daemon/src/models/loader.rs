@@ -7,6 +7,7 @@ use std::path::Path;
 
 use crate::config::DaemonConfig;
 use crate::error::Result;
+use crate::models::ace_step;
 use crate::models::backend::{Backend, LoadedModels};
 use crate::models::musicgen;
 
@@ -37,9 +38,6 @@ fn load_musicgen(config: &DaemonConfig) -> Result<LoadedModels> {
 }
 
 /// Loads ACE-Step models from the configured path.
-///
-/// Note: This is a placeholder implementation that will be fully
-/// implemented in Phase 3 (User Story 1) when ACE-Step model wrappers are added.
 fn load_ace_step(config: &DaemonConfig) -> Result<LoadedModels> {
     let model_path = config.effective_ace_step_model_path();
 
@@ -51,12 +49,9 @@ fn load_ace_step(config: &DaemonConfig) -> Result<LoadedModels> {
     // Check for required model files
     check_ace_step_models(&model_path)?;
 
-    // Placeholder: actual model loading will be implemented in Phase 3
-    // For now, return a placeholder that indicates the backend exists but
-    // actual generation will fail until Phase 3 is complete
-    Err(crate::error::DaemonError::backend_not_installed(
-        "ace_step (model loading not yet implemented)",
-    ))
+    // Load ACE-Step models
+    let models = ace_step::AceStepModels::load(&model_path, config)?;
+    Ok(LoadedModels::AceStep(models))
 }
 
 /// Required model files for ACE-Step.

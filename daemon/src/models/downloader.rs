@@ -1,6 +1,7 @@
-//! Model downloader for MusicGen ONNX models.
+//! Model downloader for ONNX models.
 //!
 //! Downloads model files from HuggingFace if not present locally.
+//! Supports both MusicGen and ACE-Step backends.
 
 use std::fs;
 use std::io::{Read, Write};
@@ -8,6 +9,7 @@ use std::path::Path;
 
 use crate::error::{DaemonError, Result};
 
+use super::ace_step::{MODEL_URLS as ACE_STEP_URLS, REQUIRED_FILES as ACE_STEP_FILES};
 use super::musicgen::{MODEL_URLS, REQUIRED_MODEL_FILES};
 
 /// Downloads all required model files if not present.
@@ -71,6 +73,63 @@ pub fn ensure_models(model_dir: &Path) -> Result<()> {
 
     eprintln!();
     eprintln!("All models downloaded successfully.");
+    Ok(())
+}
+
+/// Downloads all required ACE-Step model files if not present.
+///
+/// Returns Ok(()) if all files exist or were successfully downloaded.
+/// Note: ACE-Step models are larger (~11.5GB total).
+pub fn ensure_ace_step_models(model_dir: &Path) -> Result<()> {
+    // Create model directory if it doesn't exist
+    if !model_dir.exists() {
+        fs::create_dir_all(model_dir).map_err(|e| {
+            DaemonError::model_download_failed(format!(
+                "Failed to create model directory {}: {}",
+                model_dir.display(),
+                e
+            ))
+        })?;
+    }
+
+    // Check which files are missing
+    let mut missing: Vec<&str> = Vec::new();
+    for file in ACE_STEP_FILES {
+        let path = model_dir.join(file);
+        if !path.exists() {
+            missing.push(file);
+        }
+    }
+
+    if missing.is_empty() {
+        eprintln!("All ACE-Step model files present.");
+        return Ok(());
+    }
+
+    eprintln!("Downloading {} missing ACE-Step model files...", missing.len());
+    eprintln!("(This may take a while - total ~11.5GB)");
+    eprintln!();
+
+    // Download missing files
+    for file in &missing {
+        // Find the URL for this file
+        let url = ACE_STEP_URLS
+            .iter()
+            .find(|(name, _)| name == file)
+            .map(|(_, url)| *url);
+
+        if let Some(url) = url {
+            download_file_streaming(url, &model_dir.join(file))?;
+        } else {
+            return Err(DaemonError::model_download_failed(format!(
+                "No download URL for ACE-Step file {}",
+                file
+            )));
+        }
+    }
+
+    eprintln!();
+    eprintln!("All ACE-Step models downloaded successfully.");
     Ok(())
 }
 

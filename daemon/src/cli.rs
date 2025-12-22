@@ -5,24 +5,34 @@
 
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
+
+/// Available generation backends.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
+pub enum BackendArg {
+    /// MusicGen: 5-30 second autoregressive generation at 32kHz
+    #[default]
+    Musicgen,
+    /// ACE-Step: 5-240 second diffusion generation at 48kHz
+    AceStep,
+}
 
 /// Number of token frames generated per second of audio.
 /// MusicGen generates approximately 50 tokens per second.
 pub const TOKENS_PER_SECOND: usize = 50;
 
-/// lofi-daemon: AI music generation using MusicGen ONNX
+/// lofi-daemon: AI music generation with MusicGen and ACE-Step backends
 #[derive(Parser, Debug)]
 #[command(name = "lofi-daemon")]
-#[command(about = "AI music generation daemon using MusicGen ONNX backend")]
+#[command(about = "AI music generation daemon with MusicGen and ACE-Step backends")]
 #[command(version)]
 pub struct Cli {
     /// Text prompt describing the music to generate
     #[arg(short, long)]
     pub prompt: Option<String>,
 
-    /// Duration of audio to generate in seconds (5-120)
-    #[arg(short, long, default_value = "10", value_parser = clap::value_parser!(u32).range(5..=120))]
+    /// Duration of audio to generate in seconds (5-240 for ACE-Step, 5-30 for MusicGen)
+    #[arg(short, long, default_value = "10", value_parser = clap::value_parser!(u32).range(5..=240))]
     pub duration: u32,
 
     /// Output WAV file path
@@ -36,6 +46,18 @@ pub struct Cli {
     /// Random seed for reproducible generation
     #[arg(short, long)]
     pub seed: Option<u64>,
+
+    /// Generation backend to use
+    #[arg(short, long, value_enum, default_value_t = BackendArg::Musicgen)]
+    pub backend: BackendArg,
+
+    /// Number of diffusion steps (ACE-Step only, default 60)
+    #[arg(long, default_value = "60")]
+    pub steps: u32,
+
+    /// Guidance scale for classifier-free guidance (ACE-Step only, default 7.0)
+    #[arg(long, default_value = "7.0")]
+    pub guidance: f32,
 
     /// Run in daemon mode (JSON-RPC over stdio)
     #[arg(long)]
@@ -70,7 +92,7 @@ impl Cli {
         self.output.clone().unwrap_or_else(|| PathBuf::from("output.wav"))
     }
 
-    /// Returns the effective model directory.
+    /// Returns the effective model directory for MusicGen.
     ///
     /// Defaults to platform-specific cache location if not specified.
     pub fn model_directory(&self) -> PathBuf {
@@ -80,14 +102,37 @@ impl Cli {
             default_model_path()
         }
     }
+
+    /// Returns the model directory for ACE-Step models.
+    pub fn ace_step_model_directory(&self) -> PathBuf {
+        if let Some(ref path) = self.model_dir {
+            path.clone()
+        } else {
+            default_ace_step_model_path()
+        }
+    }
+
+    /// Returns true if using ACE-Step backend.
+    pub fn is_ace_step(&self) -> bool {
+        self.backend == BackendArg::AceStep
+    }
 }
 
-/// Returns the platform-specific default model storage path.
+/// Returns the platform-specific default model storage path for MusicGen.
 fn default_model_path() -> PathBuf {
-    if let Some(proj_dirs) = directories::ProjectDirs::from("", "", "lofi-daemon") {
-        proj_dirs.data_dir().join("models")
+    if let Some(proj_dirs) = directories::ProjectDirs::from("", "", "lofi.nvim") {
+        proj_dirs.cache_dir().join("musicgen")
     } else {
-        PathBuf::from("./models")
+        PathBuf::from("./models/musicgen")
+    }
+}
+
+/// Returns the platform-specific default model storage path for ACE-Step.
+fn default_ace_step_model_path() -> PathBuf {
+    if let Some(proj_dirs) = directories::ProjectDirs::from("", "", "lofi.nvim") {
+        proj_dirs.cache_dir().join("ace-step")
+    } else {
+        PathBuf::from("./models/ace-step")
     }
 }
 
@@ -114,6 +159,9 @@ mod tests {
             output: None,
             model_dir: None,
             seed: None,
+            backend: BackendArg::Musicgen,
+            steps: 60,
+            guidance: 7.0,
             daemon: false,
         };
         assert_eq!(cli.tokens_to_generate(), 500);
@@ -127,6 +175,9 @@ mod tests {
             output: None,
             model_dir: None,
             seed: None,
+            backend: BackendArg::Musicgen,
+            steps: 60,
+            guidance: 7.0,
             daemon: false,
         };
         assert!(cli_mode.is_cli_mode());
@@ -138,6 +189,9 @@ mod tests {
             output: None,
             model_dir: None,
             seed: None,
+            backend: BackendArg::Musicgen,
+            steps: 60,
+            guidance: 7.0,
             daemon: true,
         };
         assert!(!daemon_mode.is_cli_mode());
@@ -152,8 +206,47 @@ mod tests {
             output: None,
             model_dir: None,
             seed: None,
+            backend: BackendArg::Musicgen,
+            steps: 60,
+            guidance: 7.0,
             daemon: false,
         };
         assert_eq!(cli.output_path(), PathBuf::from("output.wav"));
+    }
+
+    #[test]
+    fn ace_step_backend_detection() {
+        let ace_step = Cli {
+            prompt: Some("test".to_string()),
+            duration: 60,
+            output: None,
+            model_dir: None,
+            seed: Some(42),
+            backend: BackendArg::AceStep,
+            steps: 60,
+            guidance: 7.0,
+            daemon: false,
+        };
+        assert!(ace_step.is_ace_step());
+
+        let musicgen = Cli {
+            prompt: Some("test".to_string()),
+            duration: 10,
+            output: None,
+            model_dir: None,
+            seed: None,
+            backend: BackendArg::Musicgen,
+            steps: 60,
+            guidance: 7.0,
+            daemon: false,
+        };
+        assert!(!musicgen.is_ace_step());
+    }
+
+    #[test]
+    fn ace_step_model_path_is_valid() {
+        let path = default_ace_step_model_path();
+        assert!(!path.as_os_str().is_empty());
+        assert!(path.to_string_lossy().contains("ace-step"));
     }
 }
