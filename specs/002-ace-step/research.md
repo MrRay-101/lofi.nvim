@@ -203,16 +203,18 @@ impl LoadedModels {
 │   ├── decoder_model.onnx
 │   ├── decoder_with_past_model.onnx
 │   └── encodec_decode.onnx
-├── ace-step/           # New ACE-Step models (~7.7GB)
-│   ├── tokenizer.json
-│   ├── text_encoder.onnx
-│   ├── transformer.onnx
-│   ├── dcae_decoder.onnx
-│   └── vocoder.onnx
+├── ace-step/           # New ACE-Step models (~11.5GB)
+│   ├── tokenizer.json           # 16.8 MB - UMT5 tokenizer
+│   ├── text_encoder.onnx        # 1.13 GB - UMT5 text encoder
+│   ├── transformer_encoder.onnx # 424 MB - ACE-Step encoder
+│   ├── transformer_decoder.onnx # 35.7 MB - ACE-Step decoder (graph only)
+│   ├── transformer_decoder_weights.bin  # 9.97 GB - ACE-Step decoder weights
+│   ├── dcae_decoder.onnx        # 317 MB - MusicDCAE latent decoder
+│   └── vocoder.onnx             # 412 MB - ADaMoSHiFiGAN vocoder
 └── tracks/             # Generated audio cache
 ```
 
-**Download Source**: HuggingFace `ACE-Step/ACE-Step-v1-3.5B` (or custom ONNX export repo)
+**Download Source**: HuggingFace `willibrandon/lofi-models` (https://huggingface.co/willibrandon/lofi-models/tree/main/ace-step/)
 
 ### 12. Cancellation Implementation
 
@@ -270,8 +272,8 @@ None - all NEEDS CLARIFICATION items from Technical Context have been addressed.
   - Alternative: `samplerate` crate
 
 ### Model Files (HuggingFace)
-- `ACE-Step/ACE-Step-v1-3.5B` - Source for ONNX export
-- Need to create ONNX export repository (no existing exports found)
+- `willibrandon/lofi-models` - ONNX exports for ACE-Step (https://huggingface.co/willibrandon/lofi-models/tree/main/ace-step/)
+- Original PyTorch source: `ACE-Step/ACE-Step-v1-3.5B`
 
 ---
 

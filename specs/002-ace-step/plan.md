@@ -20,6 +20,7 @@ Add ACE-Step as a second generation backend to the lofi.nvim daemon, enabling lo
 **Performance Goals**: 120s audio in <15s on RTX 3090 equivalent, model load <30s
 **Constraints**: Offline after model download, <7.7GB additional disk for ACE-Step weights, fp32 on macOS
 **Scale/Scope**: Single-user Neovim plugin, 2 backends (MusicGen + ACE-Step)
+**ACE-Step ONNX Models**: https://huggingface.co/willibrandon/lofi-models/tree/main/ace-step/
 
 ## Constitution Check
 

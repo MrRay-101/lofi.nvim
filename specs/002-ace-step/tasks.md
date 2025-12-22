@@ -27,12 +27,12 @@ Based on plan.md project structure:
 
 **Purpose**: Project initialization, ONNX export preparation, and module restructuring
 
-- [ ] T001 Create ONNX export environment in /Users/brandon/src/ACE-Step/.venv-export
-- [ ] T002 [P] Export UMT5 text encoder to text_encoder.onnx using export script
-- [ ] T003 [P] Export ACEStepTransformer to transformer.onnx using export script
-- [ ] T004 [P] Export MusicDCAE decoder to dcae_decoder.onnx using export script
-- [ ] T005 [P] Export ADaMoSHiFiGAN vocoder to vocoder.onnx using export script
-- [ ] T006 Verify all ONNX exports load correctly with onnxruntime
+- [X] T001 Create ONNX export environment in /Users/brandon/src/ACE-Step/.venv-export
+- [X] T002 [P] Export UMT5 text encoder to text_encoder.onnx using export script
+- [X] T003 [P] Export ACEStepTransformer to transformer.onnx using export script
+- [X] T004 [P] Export MusicDCAE decoder to dcae_decoder.onnx using export script
+- [X] T005 [P] Export ADaMoSHiFiGAN vocoder to vocoder.onnx using export script
+- [X] T006 Verify all ONNX exports load correctly with onnxruntime
 - [ ] T007 Create daemon/src/models/ace_step/ directory structure
 - [ ] T008 [P] Restructure existing MusicGen code into daemon/src/models/musicgen/mod.rs
 - [ ] T009 [P] Create daemon/src/models/musicgen/models.rs from existing loader.rs
@@ -148,7 +148,7 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Add ACE-Step model URLs to daemon/src/models/downloader.rs
+- [ ] T052 [US3] Add ACE-Step model URLs (https://huggingface.co/willibrandon/lofi-models/resolve/main/ace-step/) to daemon/src/models/downloader.rs
 - [ ] T053 [US3] Implement download_ace_step_models() in daemon/src/models/downloader.rs
 - [ ] T054 [US3] Add download_backend RPC method in daemon/src/rpc/methods.rs
 - [ ] T055 [US3] Implement download progress tracking in daemon/src/models/downloader.rs
@@ -355,7 +355,13 @@ This enables generating 5-240 second instrumental audio with default parameters.
 ## Notes
 
 - ONNX export (Phase 1, T001-T006) requires Python environment and is external to Rust build
-- Model files (~7.7GB) not included in repo - downloaded via US3 or manually placed
+- Model files (~11.5GB) hosted at https://huggingface.co/willibrandon/lofi-models/tree/main/ace-step/
+  - `text_encoder.onnx` (1.13 GB) - UMT5 text encoder
+  - `transformer_encoder.onnx` (424 MB) - ACE-Step encoder
+  - `transformer_decoder.onnx` (35.7 MB) + `transformer_decoder_weights.bin` (9.97 GB) - ACE-Step decoder
+  - `dcae_decoder.onnx` (317 MB) - MusicDCAE latent decoder
+  - `vocoder.onnx` (412 MB) - ADaMoSHiFiGAN vocoder
+  - `tokenizer.json` (16.8 MB) - UMT5 tokenizer
 - macOS requires fp32 precision - detected automatically
 - Existing MusicGen tests should continue passing after restructure
 - [P] tasks = different files, no dependencies within phase
