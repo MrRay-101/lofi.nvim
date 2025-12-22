@@ -83,12 +83,15 @@ Queues a generation request. Extended to support backend selection and ACE-Step 
 
 | Code | Message | When |
 |------|---------|------|
-| -32602 | Invalid params | Validation failed |
-| -32001 | Backend not installed | Requested backend unavailable |
-| -32002 | Backend loading | Backend still loading |
-| -32003 | Queue full | 5 requests already queued |
-| -32004 | Invalid duration | Outside backend's range |
-| -32005 | Invalid backend | Unknown backend type |
+| -32602 | Invalid params | JSON parsing failed |
+| -32004 | Queue full | 10 requests already queued |
+| -32005 | Invalid duration | Outside backend's range |
+| -32006 | Invalid prompt | Empty or too long prompt |
+| -32007 | Invalid backend | Unknown backend type |
+| -32008 | Backend not installed | Requested backend unavailable |
+| -32009 | Invalid inference steps | Steps outside 1-200 range |
+| -32010 | Invalid guidance scale | Scale outside 1.0-30.0 range |
+| -32011 | Invalid scheduler | Unknown scheduler type |
 
 ---
 
@@ -135,10 +138,12 @@ Cancels an in-progress or queued generation.
 
 **Errors**:
 
+Note: Cancel functionality uses process termination as a fallback mechanism. These error responses are reserved for future RPC-based cancellation.
+
 | Code | Message | When |
 |------|---------|------|
-| -32006 | Track not found | Unknown track_id |
-| -32007 | Already complete | Track already finished |
+| -32000 | Track not found | Unknown track_id |
+| -32001 | Already complete | Track already finished |
 
 ---
 
@@ -234,8 +239,7 @@ Initiates download of backend model weights.
 
 | Code | Message | When |
 |------|---------|------|
-| -32005 | Invalid backend | Unknown backend type |
-| -32008 | Download in progress | Already downloading |
+| -32007 | Invalid backend | Unknown backend type |
 
 ---
 
@@ -448,23 +452,32 @@ Sent during model download.
 
 ## Error Codes Summary
 
+### Standard JSON-RPC Errors
+
 | Code | Constant | Description |
 |------|----------|-------------|
+| -32700 | PARSE_ERROR | Invalid JSON |
 | -32600 | INVALID_REQUEST | Invalid JSON-RPC request |
 | -32601 | METHOD_NOT_FOUND | Unknown method |
 | -32602 | INVALID_PARAMS | Parameter validation failed |
 | -32603 | INTERNAL_ERROR | Unexpected internal error |
-| -32001 | BACKEND_NOT_INSTALLED | Backend models not downloaded |
-| -32002 | BACKEND_LOADING | Backend still loading into memory |
-| -32003 | QUEUE_FULL | Generation queue at capacity |
-| -32004 | INVALID_DURATION | Duration outside backend range |
-| -32005 | INVALID_BACKEND | Unknown backend type |
-| -32006 | TRACK_NOT_FOUND | Unknown track ID |
-| -32007 | ALREADY_COMPLETE | Track already finished |
-| -32008 | DOWNLOAD_IN_PROGRESS | Already downloading |
-| -32009 | MODEL_LOAD_FAILED | Failed to load models |
-| -32010 | MODEL_INFERENCE_FAILED | Inference error |
-| -32011 | CANCELLED | Generation was cancelled |
+
+### Application Errors
+
+| Code | Constant | Description |
+|------|----------|-------------|
+| -32000 | MODEL_NOT_FOUND | Model files not found at expected path |
+| -32001 | MODEL_LOAD_FAILED | Failed to load models into memory |
+| -32002 | MODEL_DOWNLOAD_FAILED | Model download failed |
+| -32003 | MODEL_INFERENCE_FAILED | Inference error during generation |
+| -32004 | QUEUE_FULL | Generation queue at capacity (max 10) |
+| -32005 | INVALID_DURATION | Duration outside backend range |
+| -32006 | INVALID_PROMPT | Prompt validation failed |
+| -32007 | INVALID_BACKEND | Unknown backend type |
+| -32008 | BACKEND_NOT_INSTALLED | Backend models not downloaded |
+| -32009 | INVALID_INFERENCE_STEPS | Steps outside valid range (1-200) |
+| -32010 | INVALID_GUIDANCE_SCALE | Scale outside valid range (1.0-30.0) |
+| -32011 | INVALID_SCHEDULER | Unknown scheduler type |
 
 ---
 
