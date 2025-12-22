@@ -197,6 +197,9 @@ fn handle_generate(
         let last_percent = RefCell::new(0u8);
         let track_id_for_progress = track_id.clone();
 
+        // Track if this is step-based (ACE-Step) or token-based (MusicGen)
+        let is_step_based = backend == Backend::AceStep;
+
         match state.models.generate(&dispatch_params, |current, total| {
             if total == 0 {
                 return;
@@ -219,6 +222,13 @@ fn handle_generate(
                     0.0
                 };
 
+                // Include step info for ACE-Step, None for MusicGen
+                let (current_step, total_steps) = if is_step_based {
+                    (Some(current), Some(total))
+                } else {
+                    (None, None)
+                };
+
                 send_notification(
                     "generation_progress",
                     GenerationProgressParams {
@@ -227,6 +237,8 @@ fn handle_generate(
                         tokens_generated: current,
                         tokens_estimated: total,
                         eta_sec,
+                        current_step,
+                        total_steps,
                     },
                 );
             }
@@ -338,6 +350,7 @@ fn process_next_job(state: &mut ServerState, backend: Backend) {
         // Track progress
         let last_percent = RefCell::new(0u8);
         let track_id_for_progress = track_id.clone();
+        let is_step_based = backend == Backend::AceStep;
 
         match state.models.generate(&dispatch_params, |current, total| {
             if total == 0 {
@@ -359,6 +372,13 @@ fn process_next_job(state: &mut ServerState, backend: Backend) {
                     0.0
                 };
 
+                // Include step info for ACE-Step, None for MusicGen
+                let (current_step, total_steps) = if is_step_based {
+                    (Some(current), Some(total))
+                } else {
+                    (None, None)
+                };
+
                 send_notification(
                     "generation_progress",
                     GenerationProgressParams {
@@ -367,6 +387,8 @@ fn process_next_job(state: &mut ServerState, backend: Backend) {
                         tokens_generated: current,
                         tokens_estimated: total,
                         eta_sec,
+                        current_step,
+                        total_steps,
                     },
                 );
             }

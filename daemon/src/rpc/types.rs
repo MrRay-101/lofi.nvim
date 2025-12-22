@@ -483,14 +483,26 @@ pub struct GenerationProgressParams {
     /// Progress percentage (capped at 99 until complete).
     pub percent: u8,
 
-    /// Number of token frames generated so far.
+    /// Number of token frames generated so far (for MusicGen).
+    /// For ACE-Step, this equals current_step.
     pub tokens_generated: usize,
 
-    /// Estimated total tokens.
+    /// Estimated total tokens (for MusicGen).
+    /// For ACE-Step, this equals total_steps.
     pub tokens_estimated: usize,
 
     /// Estimated seconds remaining.
     pub eta_sec: f32,
+
+    /// Current diffusion step (ACE-Step only).
+    /// None for MusicGen token-based generation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_step: Option<usize>,
+
+    /// Total diffusion steps (ACE-Step only).
+    /// None for MusicGen token-based generation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_steps: Option<usize>,
 }
 
 /// Notification sent when generation finishes successfully.

@@ -11,5 +11,5 @@ pub use pipeline::{
     estimate_generation_time, estimate_samples, generate, generate_ace_step, generate_with_models,
     generate_with_progress,
 };
-pub use progress::ProgressTracker;
+pub use progress::{ProgressMode, ProgressTracker};
 pub use queue::{GenerationQueue, JobResult, QueueFullError, QueueProcessor, MAX_QUEUE_SIZE};

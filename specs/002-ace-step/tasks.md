@@ -173,17 +173,17 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 4
 
-- [ ] T059 [US4] Update daemon/src/generation/progress.rs to support variable step counts
-- [ ] T060 [US4] Implement step-based ETA calculation for diffusion in daemon/src/generation/progress.rs
-- [ ] T061 [US4] Add current_step and total_steps to progress notification in daemon/src/rpc/types.rs
-- [ ] T062 [US4] Emit progress at each diffusion step in daemon/src/models/ace_step/generate.rs
-- [ ] T063 [US4] Update generation_complete notification with backend info in daemon/src/rpc/methods.rs
+- [X] T059 [US4] Update daemon/src/generation/progress.rs to support variable step counts
+- [X] T060 [US4] Implement step-based ETA calculation for diffusion in daemon/src/generation/progress.rs
+- [X] T061 [US4] Add current_step and total_steps to progress notification in daemon/src/rpc/types.rs
+- [X] T062 [US4] Emit progress at each diffusion step in daemon/src/models/ace_step/generate.rs
+- [X] T063 [US4] Update generation_complete notification with backend info in daemon/src/rpc/methods.rs
 
 ### User Story 4 Verification (MANDATORY - Principle VI)
 
-- [ ] V021 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
-- [ ] V022 [VERIFY] Progress notifications include step number and ETA
-- [ ] V023 [VERIFY] Progress percentage accurate within 10% of actual completion
+- [X] V021 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
+- [X] V022 [VERIFY] Progress notifications include step number and ETA
+- [X] V023 [VERIFY] Progress percentage accurate within 10% of actual completion
 
 ---
 
