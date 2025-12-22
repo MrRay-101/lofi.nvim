@@ -32,12 +32,32 @@ pub enum ErrorCode {
     QueueFull,
 
     /// Requested duration is outside valid range.
-    /// Trigger: Duration outside 5-120 second range.
+    /// Trigger: Duration outside 5-120 second range (MusicGen) or 5-240 (ACE-Step).
     InvalidDuration,
 
     /// Prompt text is invalid.
     /// Trigger: Empty prompt or exceeds 1000 characters.
     InvalidPrompt,
+
+    /// Requested backend is not installed.
+    /// Trigger: ACE-Step model files not downloaded.
+    BackendNotInstalled,
+
+    /// Invalid inference steps value.
+    /// Trigger: Steps outside valid range (1-200).
+    InvalidInferenceSteps,
+
+    /// Invalid guidance scale value.
+    /// Trigger: Scale outside valid range (1.0-20.0).
+    InvalidGuidanceScale,
+
+    /// Invalid scheduler type.
+    /// Trigger: Unknown scheduler name specified.
+    InvalidScheduler,
+
+    /// Generation was cancelled.
+    /// Trigger: User requested cancellation via cancel RPC.
+    GenerationCancelled,
 }
 
 impl ErrorCode {
@@ -51,6 +71,11 @@ impl ErrorCode {
             ErrorCode::QueueFull => "QUEUE_FULL",
             ErrorCode::InvalidDuration => "INVALID_DURATION",
             ErrorCode::InvalidPrompt => "INVALID_PROMPT",
+            ErrorCode::BackendNotInstalled => "BACKEND_NOT_INSTALLED",
+            ErrorCode::InvalidInferenceSteps => "INVALID_INFERENCE_STEPS",
+            ErrorCode::InvalidGuidanceScale => "INVALID_GUIDANCE_SCALE",
+            ErrorCode::InvalidScheduler => "INVALID_SCHEDULER",
+            ErrorCode::GenerationCancelled => "GENERATION_CANCELLED",
         }
     }
 
@@ -62,8 +87,13 @@ impl ErrorCode {
             ErrorCode::ModelDownloadFailed => "Failed to download model from remote source",
             ErrorCode::ModelInferenceFailed => "Model inference failed during generation",
             ErrorCode::QueueFull => "Generation queue is at maximum capacity (10 jobs)",
-            ErrorCode::InvalidDuration => "Duration must be between 5 and 120 seconds",
+            ErrorCode::InvalidDuration => "Duration must be between 5 and 240 seconds",
             ErrorCode::InvalidPrompt => "Prompt must be non-empty and at most 1000 characters",
+            ErrorCode::BackendNotInstalled => "Requested backend is not installed",
+            ErrorCode::InvalidInferenceSteps => "Inference steps must be between 1 and 200",
+            ErrorCode::InvalidGuidanceScale => "Guidance scale must be between 1.0 and 20.0",
+            ErrorCode::InvalidScheduler => "Unknown scheduler type specified",
+            ErrorCode::GenerationCancelled => "Generation was cancelled by user request",
         }
     }
 
@@ -79,7 +109,7 @@ impl ErrorCode {
                  or delete cache and re-download models"
             }
             ErrorCode::ModelDownloadFailed => {
-                "Check internet connection, verify disk space (500MB+ required), \
+                "Check internet connection, verify disk space (500MB+ required for MusicGen, 8GB+ for ACE-Step), \
                  or try again later if HuggingFace is unavailable"
             }
             ErrorCode::ModelInferenceFailed => {
@@ -91,11 +121,27 @@ impl ErrorCode {
                  Maximum queue size is 10 concurrent requests"
             }
             ErrorCode::InvalidDuration => {
-                "Specify a duration between 5 and 120 seconds (e.g., duration_sec: 30)"
+                "Specify a duration between 5-120 seconds for MusicGen or 5-240 seconds for ACE-Step"
             }
             ErrorCode::InvalidPrompt => {
                 "Provide a descriptive prompt between 1 and 1000 characters \
                  (e.g., 'lofi hip hop, jazzy piano, relaxing vibes')"
+            }
+            ErrorCode::BackendNotInstalled => {
+                "Download the backend models first using the download_backend RPC method, \
+                 or set LOFI_BACKEND to an installed backend"
+            }
+            ErrorCode::InvalidInferenceSteps => {
+                "Specify inference_steps between 1 and 200. Default is 60 for Euler scheduler"
+            }
+            ErrorCode::InvalidGuidanceScale => {
+                "Specify guidance_scale between 1.0 and 20.0. Default is 7.0"
+            }
+            ErrorCode::InvalidScheduler => {
+                "Use one of: 'euler', 'heun', or 'pingpong'"
+            }
+            ErrorCode::GenerationCancelled => {
+                "Generation was stopped as requested. Start a new generation to continue"
             }
         }
     }
@@ -201,10 +247,56 @@ impl DaemonError {
     pub fn prompt_too_long(len: usize) -> Self {
         Self::new(
             ErrorCode::InvalidPrompt,
+            format!("Prompt too long: {} characters (maximum 1000)", len),
+        )
+    }
+
+    /// Creates a BACKEND_NOT_INSTALLED error.
+    pub fn backend_not_installed(backend: &str) -> Self {
+        Self::new(
+            ErrorCode::BackendNotInstalled,
+            format!("Backend '{}' is not installed", backend),
+        )
+    }
+
+    /// Creates an INVALID_INFERENCE_STEPS error.
+    pub fn invalid_inference_steps(steps: u32) -> Self {
+        Self::new(
+            ErrorCode::InvalidInferenceSteps,
             format!(
-                "Prompt too long: {} characters (maximum 1000)",
-                len
+                "Invalid inference steps: {} (must be between 1 and 200)",
+                steps
             ),
+        )
+    }
+
+    /// Creates an INVALID_GUIDANCE_SCALE error.
+    pub fn invalid_guidance_scale(scale: f32) -> Self {
+        Self::new(
+            ErrorCode::InvalidGuidanceScale,
+            format!(
+                "Invalid guidance scale: {} (must be between 1.0 and 20.0)",
+                scale
+            ),
+        )
+    }
+
+    /// Creates an INVALID_SCHEDULER error.
+    pub fn invalid_scheduler(scheduler: &str) -> Self {
+        Self::new(
+            ErrorCode::InvalidScheduler,
+            format!(
+                "Invalid scheduler: '{}' (must be 'euler', 'heun', or 'pingpong')",
+                scheduler
+            ),
+        )
+    }
+
+    /// Creates a GENERATION_CANCELLED error.
+    pub fn generation_cancelled() -> Self {
+        Self::new(
+            ErrorCode::GenerationCancelled,
+            "Generation was cancelled by user request",
         )
     }
 }
@@ -240,11 +332,34 @@ mod tests {
     fn error_code_as_str() {
         assert_eq!(ErrorCode::ModelNotFound.as_str(), "MODEL_NOT_FOUND");
         assert_eq!(ErrorCode::ModelLoadFailed.as_str(), "MODEL_LOAD_FAILED");
-        assert_eq!(ErrorCode::ModelDownloadFailed.as_str(), "MODEL_DOWNLOAD_FAILED");
-        assert_eq!(ErrorCode::ModelInferenceFailed.as_str(), "MODEL_INFERENCE_FAILED");
+        assert_eq!(
+            ErrorCode::ModelDownloadFailed.as_str(),
+            "MODEL_DOWNLOAD_FAILED"
+        );
+        assert_eq!(
+            ErrorCode::ModelInferenceFailed.as_str(),
+            "MODEL_INFERENCE_FAILED"
+        );
         assert_eq!(ErrorCode::QueueFull.as_str(), "QUEUE_FULL");
         assert_eq!(ErrorCode::InvalidDuration.as_str(), "INVALID_DURATION");
         assert_eq!(ErrorCode::InvalidPrompt.as_str(), "INVALID_PROMPT");
+        assert_eq!(
+            ErrorCode::BackendNotInstalled.as_str(),
+            "BACKEND_NOT_INSTALLED"
+        );
+        assert_eq!(
+            ErrorCode::InvalidInferenceSteps.as_str(),
+            "INVALID_INFERENCE_STEPS"
+        );
+        assert_eq!(
+            ErrorCode::InvalidGuidanceScale.as_str(),
+            "INVALID_GUIDANCE_SCALE"
+        );
+        assert_eq!(ErrorCode::InvalidScheduler.as_str(), "INVALID_SCHEDULER");
+        assert_eq!(
+            ErrorCode::GenerationCancelled.as_str(),
+            "GENERATION_CANCELLED"
+        );
     }
 
     #[test]
@@ -257,6 +372,11 @@ mod tests {
         assert!(!ErrorCode::QueueFull.recovery_hint().is_empty());
         assert!(!ErrorCode::InvalidDuration.recovery_hint().is_empty());
         assert!(!ErrorCode::InvalidPrompt.recovery_hint().is_empty());
+        assert!(!ErrorCode::BackendNotInstalled.recovery_hint().is_empty());
+        assert!(!ErrorCode::InvalidInferenceSteps.recovery_hint().is_empty());
+        assert!(!ErrorCode::InvalidGuidanceScale.recovery_hint().is_empty());
+        assert!(!ErrorCode::InvalidScheduler.recovery_hint().is_empty());
+        assert!(!ErrorCode::GenerationCancelled.recovery_hint().is_empty());
     }
 
     #[test]
@@ -265,5 +385,27 @@ mod tests {
         assert!(err.to_string().contains("INVALID_DURATION"));
         assert!(err.to_string().contains("200"));
         assert!(err.to_string().contains("Recovery:"));
+    }
+
+    #[test]
+    fn ace_step_error_constructors() {
+        let err = DaemonError::backend_not_installed("ace_step");
+        assert_eq!(err.code, ErrorCode::BackendNotInstalled);
+        assert!(err.message.contains("ace_step"));
+
+        let err = DaemonError::invalid_inference_steps(300);
+        assert_eq!(err.code, ErrorCode::InvalidInferenceSteps);
+        assert!(err.message.contains("300"));
+
+        let err = DaemonError::invalid_guidance_scale(25.0);
+        assert_eq!(err.code, ErrorCode::InvalidGuidanceScale);
+        assert!(err.message.contains("25"));
+
+        let err = DaemonError::invalid_scheduler("unknown");
+        assert_eq!(err.code, ErrorCode::InvalidScheduler);
+        assert!(err.message.contains("unknown"));
+
+        let err = DaemonError::generation_cancelled();
+        assert_eq!(err.code, ErrorCode::GenerationCancelled);
     }
 }

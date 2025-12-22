@@ -56,22 +56,22 @@ Based on plan.md project structure:
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T014 Create Backend enum (MusicGen, AceStep) in daemon/src/models/backend.rs
-- [ ] T015 Create LoadedModels enum with MusicGen and AceStep variants in daemon/src/models/backend.rs
-- [ ] T016 Add BackendType enum to daemon/src/config.rs with default_backend field
-- [ ] T017 Add ace_step_model_dir path to DaemonConfig in daemon/src/config.rs
-- [ ] T018 Add ACE-Step-specific config defaults (inference_steps, scheduler, guidance_scale) to daemon/src/config.rs
-- [ ] T019 [P] Add ACE-Step error codes to daemon/src/error.rs (BACKEND_NOT_INSTALLED, INVALID_DURATION, etc.)
-- [ ] T020 Update daemon/src/models/loader.rs to support loading either backend
-- [ ] T021 Update daemon/src/cache/tracks.rs to include backend in track ID hash
-- [ ] T022 Update daemon/src/audio/wav.rs to support 48kHz sample rate output
+- [X] T014 Create Backend enum (MusicGen, AceStep) in daemon/src/models/backend.rs
+- [X] T015 Create LoadedModels enum with MusicGen and AceStep variants in daemon/src/models/backend.rs
+- [X] T016 Add BackendType enum to daemon/src/config.rs with default_backend field
+- [X] T017 Add ace_step_model_dir path to DaemonConfig in daemon/src/config.rs
+- [X] T018 Add ACE-Step-specific config defaults (inference_steps, scheduler, guidance_scale) to daemon/src/config.rs
+- [X] T019 [P] Add ACE-Step error codes to daemon/src/error.rs (BACKEND_NOT_INSTALLED, INVALID_DURATION, etc.)
+- [X] T020 Update daemon/src/models/loader.rs to support loading either backend
+- [X] T021 Update daemon/src/cache/tracks.rs to include backend in track ID hash
+- [X] T022 Update daemon/src/audio/wav.rs to support 48kHz sample rate output
 
 ### Phase 2 Verification (MANDATORY - Principle VI)
 
-- [ ] V005 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
-- [ ] V006 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [ ] V007 [VERIFY] Run `cargo test` - all existing tests pass
-- [ ] V008 [VERIFY] Backend enum compiles and MusicGen still loads correctly
+- [X] V005 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
+- [X] V006 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [X] V007 [VERIFY] Run `cargo test` - all existing tests pass
+- [X] V008 [VERIFY] Backend enum compiles and MusicGen still loads correctly
 
 ---
 

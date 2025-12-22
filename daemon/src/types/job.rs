@@ -6,6 +6,8 @@
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
+use crate::models::Backend;
+
 use super::track::compute_track_id;
 
 /// Priority level for generation jobs.
@@ -121,9 +123,22 @@ impl GenerationJob {
         priority: JobPriority,
         model_version: &str,
     ) -> Self {
+        // Default to MusicGen backend (Phase 4 will add backend selection)
+        Self::with_backend(prompt, duration_sec, seed, priority, model_version, Backend::MusicGen)
+    }
+
+    /// Creates a new pending GenerationJob with a specific backend.
+    pub fn with_backend(
+        prompt: String,
+        duration_sec: u32,
+        seed: Option<u64>,
+        priority: JobPriority,
+        model_version: &str,
+        backend: Backend,
+    ) -> Self {
         let job_id = generate_uuid_v4();
         let actual_seed = seed.unwrap_or_else(generate_random_seed);
-        let track_id = compute_track_id(&prompt, actual_seed, duration_sec as f32, model_version);
+        let track_id = compute_track_id(backend, &prompt, actual_seed, duration_sec as f32, model_version);
         let tokens_estimated = duration_sec * 50;
 
         Self {

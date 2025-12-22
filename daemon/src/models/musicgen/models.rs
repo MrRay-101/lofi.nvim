@@ -29,6 +29,16 @@ pub struct MusicGenModels {
     pub device_name: String,
 }
 
+impl std::fmt::Debug for MusicGenModels {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MusicGenModels")
+            .field("config", &self.config)
+            .field("version", &self.version)
+            .field("device_name", &self.device_name)
+            .finish_non_exhaustive()
+    }
+}
+
 impl MusicGenModels {
     /// Returns the model version string.
     pub fn version(&self) -> &str {

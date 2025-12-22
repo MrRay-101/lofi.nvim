@@ -9,7 +9,13 @@ use hound::{SampleFormat, WavSpec, WavWriter};
 use crate::error::{DaemonError, Result};
 
 /// Audio sample rate for MusicGen output (32kHz).
-pub const SAMPLE_RATE: u32 = 32000;
+pub const SAMPLE_RATE_MUSICGEN: u32 = 32000;
+
+/// Audio sample rate for ACE-Step output (48kHz).
+pub const SAMPLE_RATE_ACE_STEP: u32 = 48000;
+
+/// Default sample rate (MusicGen).
+pub const SAMPLE_RATE: u32 = SAMPLE_RATE_MUSICGEN;
 
 /// Number of audio channels (stereo).
 pub const CHANNELS: u16 = 2;

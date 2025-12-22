@@ -158,15 +158,9 @@ pub fn send_notification<T: serde::Serialize>(method: &'static str, params: T) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Device;
 
     fn test_config() -> DaemonConfig {
-        DaemonConfig {
-            model_path: None,
-            cache_path: None,
-            device: Device::Cpu,
-            threads: Some(4),
-        }
+        DaemonConfig::default()
     }
 
     #[test]

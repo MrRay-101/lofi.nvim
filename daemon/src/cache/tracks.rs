@@ -120,6 +120,7 @@ impl Default for TrackCache {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::Backend;
     use std::thread;
     use std::time::Duration;
 
@@ -134,6 +135,7 @@ mod tests {
             sample_rate: 32000,
             seed: 12345,
             model_version: "musicgen-small-fp16-v1".to_string(),
+            backend: Backend::MusicGen,
             generation_time_sec: 25.0,
             created_at: SystemTime::now(),
         }

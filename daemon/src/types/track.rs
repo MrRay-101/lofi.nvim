@@ -8,6 +8,8 @@ use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use std::time::SystemTime;
 
+use crate::models::Backend;
+
 /// A successfully generated audio file stored in the cache.
 ///
 /// Tracks are immutable once created and are uniquely identified by their
@@ -15,7 +17,7 @@ use std::time::SystemTime;
 /// deduplication of identical requests.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Track {
-    /// Primary key - SHA256 hash of (prompt + seed + duration + model_version).
+    /// Primary key - SHA256 hash of (backend + prompt + seed + duration + model_version).
     /// Format: 16 hex characters.
     pub track_id: String,
 
@@ -29,15 +31,18 @@ pub struct Track {
     /// Actual duration of generated audio in seconds.
     pub duration_sec: f32,
 
-    /// Audio sample rate in Hz. Always 32000 for MusicGen.
+    /// Audio sample rate in Hz. 32000 for MusicGen, 48000 for ACE-Step.
     pub sample_rate: u32,
 
     /// Random seed used for generation.
     pub seed: u64,
 
     /// Model identifier for reproducibility.
-    /// Example: "musicgen-small-fp16-v1"
+    /// Example: "musicgen-small-fp16-v1" or "ace-step-v1"
     pub model_version: String,
+
+    /// Backend used for generation.
+    pub backend: Backend,
 
     /// Time taken to generate the audio in seconds.
     pub generation_time_sec: f32,
@@ -58,17 +63,19 @@ impl Track {
         duration_sec: f32,
         seed: u64,
         model_version: String,
+        backend: Backend,
         generation_time_sec: f32,
     ) -> Self {
-        let track_id = compute_track_id(&prompt, seed, duration_sec, &model_version);
+        let track_id = compute_track_id(backend, &prompt, seed, duration_sec, &model_version);
         Self {
             track_id,
             path,
             prompt,
             duration_sec,
-            sample_rate: 32000,
+            sample_rate: backend.sample_rate(),
             seed,
             model_version,
+            backend,
             generation_time_sec,
             created_at: SystemTime::now(),
         }
@@ -95,10 +102,15 @@ impl Track {
             return Some(format!("Track file does not exist: {:?}", self.path));
         }
 
-        // Duration must be within 5-120 seconds
-        if !(5.0..=120.0).contains(&self.duration_sec) {
+        // Duration must be within backend-specific limits
+        let max_duration = self.backend.max_duration_sec() as f32;
+        let min_duration = self.backend.min_duration_sec() as f32;
+        if !(min_duration..=max_duration).contains(&self.duration_sec) {
             return Some(format!(
-                "Duration must be between 5 and 120 seconds, got {}",
+                "Duration must be between {} and {} seconds for {}, got {}",
+                min_duration,
+                max_duration,
+                self.backend,
                 self.duration_sec
             ));
         }
@@ -122,12 +134,26 @@ impl Track {
 /// Computes a deterministic track ID from generation parameters.
 ///
 /// The track ID is the first 16 hex characters of the SHA256 hash of:
-/// `{prompt}:{seed}:{duration_sec}:{model_version}`
+/// `{backend}:{prompt}:{seed}:{duration_sec}:{model_version}`
 ///
 /// This enables deduplication: identical generation parameters always
-/// produce the same track_id.
-pub fn compute_track_id(prompt: &str, seed: u64, duration_sec: f32, model_version: &str) -> String {
-    let input = format!("{}:{}:{}:{}", prompt, seed, duration_sec, model_version);
+/// produce the same track_id. Including the backend ensures that the same
+/// prompt generates different track IDs for different backends.
+pub fn compute_track_id(
+    backend: Backend,
+    prompt: &str,
+    seed: u64,
+    duration_sec: f32,
+    model_version: &str,
+) -> String {
+    let input = format!(
+        "{}:{}:{}:{}:{}",
+        backend.as_str(),
+        prompt,
+        seed,
+        duration_sec,
+        model_version
+    );
     let mut hasher = Sha256::new();
     hasher.update(input.as_bytes());
     let result = hasher.finalize();
@@ -179,24 +205,61 @@ mod tests {
 
     #[test]
     fn track_id_deterministic() {
-        let id1 = compute_track_id("lofi beats", 42, 30.0, "musicgen-small-fp16-v1");
-        let id2 = compute_track_id("lofi beats", 42, 30.0, "musicgen-small-fp16-v1");
+        let id1 = compute_track_id(
+            Backend::MusicGen,
+            "lofi beats",
+            42,
+            30.0,
+            "musicgen-small-fp16-v1",
+        );
+        let id2 = compute_track_id(
+            Backend::MusicGen,
+            "lofi beats",
+            42,
+            30.0,
+            "musicgen-small-fp16-v1",
+        );
         assert_eq!(id1, id2);
         assert_eq!(id1.len(), 16);
     }
 
     #[test]
     fn track_id_varies_with_params() {
-        let id1 = compute_track_id("lofi beats", 42, 30.0, "musicgen-small-fp16-v1");
-        let id2 = compute_track_id("lofi beats", 43, 30.0, "musicgen-small-fp16-v1");
-        let id3 = compute_track_id("jazz", 42, 30.0, "musicgen-small-fp16-v1");
+        let id1 = compute_track_id(
+            Backend::MusicGen,
+            "lofi beats",
+            42,
+            30.0,
+            "musicgen-small-fp16-v1",
+        );
+        let id2 = compute_track_id(
+            Backend::MusicGen,
+            "lofi beats",
+            43,
+            30.0,
+            "musicgen-small-fp16-v1",
+        );
+        let id3 = compute_track_id(
+            Backend::MusicGen,
+            "jazz",
+            42,
+            30.0,
+            "musicgen-small-fp16-v1",
+        );
         assert_ne!(id1, id2);
         assert_ne!(id1, id3);
     }
 
     #[test]
+    fn track_id_varies_with_backend() {
+        let id1 = compute_track_id(Backend::MusicGen, "lofi beats", 42, 30.0, "v1");
+        let id2 = compute_track_id(Backend::AceStep, "lofi beats", 42, 30.0, "v1");
+        assert_ne!(id1, id2, "Different backends should produce different track IDs");
+    }
+
+    #[test]
     fn track_id_hex_format() {
-        let id = compute_track_id("test", 0, 10.0, "v1");
+        let id = compute_track_id(Backend::MusicGen, "test", 0, 10.0, "v1");
         assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
     }
 }

@@ -8,7 +8,7 @@ use std::time::Instant;
 use crate::audio::{write_wav, SAMPLE_RATE};
 use crate::cli::TOKENS_PER_SECOND;
 use crate::generation::{generate_with_models, ProgressTracker};
-use crate::models::ensure_models;
+use crate::models::{ensure_models, Backend};
 use crate::types::{compute_track_id, GenerationJob, JobPriority, Track};
 
 use super::server::{send_notification, ServerState};
@@ -78,8 +78,12 @@ fn handle_generate(
     let models = state.models.as_mut().unwrap();
     let model_version = models.version().to_string();
 
-    // Compute track ID
+    // For now, always use MusicGen backend (Phase 4 will add backend selection)
+    let backend = Backend::MusicGen;
+
+    // Compute track ID (includes backend for uniqueness)
     let track_id = compute_track_id(
+        backend,
         &params.prompt,
         seed,
         params.duration_sec as f32,
@@ -222,6 +226,7 @@ fn handle_generate(
                     actual_duration,
                     seed,
                     model_version.clone(),
+                    backend,
                     generation_time,
                 );
                 state.cache.put(track);
@@ -350,6 +355,7 @@ fn process_next_job(state: &mut ServerState) {
                         actual_duration,
                         seed,
                         model_version.clone(),
+                        Backend::MusicGen,
                         generation_time,
                     );
                     state.cache.put(track);
@@ -393,6 +399,10 @@ fn process_next_job(state: &mut ServerState) {
 mod tests {
     use super::*;
 
+    fn test_config() -> crate::config::DaemonConfig {
+        crate::config::DaemonConfig::default()
+    }
+
     #[test]
     fn handle_ping() {
         let result = super::handle_ping();
@@ -403,13 +413,7 @@ mod tests {
 
     #[test]
     fn handle_unknown_method() {
-        use crate::config::{DaemonConfig, Device};
-        let mut state = ServerState::new(DaemonConfig {
-            model_path: None,
-            cache_path: None,
-            device: Device::Cpu,
-            threads: Some(4),
-        });
+        let mut state = ServerState::new(test_config());
         let result = handle_request("nonexistent", serde_json::Value::Null, &mut state);
         assert!(result.is_err());
         let err = result.unwrap_err();
@@ -418,13 +422,7 @@ mod tests {
 
     #[test]
     fn handle_generate_invalid_params() {
-        use crate::config::{DaemonConfig, Device};
-        let mut state = ServerState::new(DaemonConfig {
-            model_path: None,
-            cache_path: None,
-            device: Device::Cpu,
-            threads: Some(4),
-        });
+        let mut state = ServerState::new(test_config());
         let params = serde_json::json!({});
         let result = handle_request("generate", params, &mut state);
         assert!(result.is_err());
@@ -434,13 +432,7 @@ mod tests {
 
     #[test]
     fn handle_generate_empty_prompt() {
-        use crate::config::{DaemonConfig, Device};
-        let mut state = ServerState::new(DaemonConfig {
-            model_path: None,
-            cache_path: None,
-            device: Device::Cpu,
-            threads: Some(4),
-        });
+        let mut state = ServerState::new(test_config());
         let params = serde_json::json!({ "prompt": "" });
         let result = handle_request("generate", params, &mut state);
         assert!(result.is_err());
@@ -450,13 +442,7 @@ mod tests {
 
     #[test]
     fn handle_shutdown() {
-        use crate::config::{DaemonConfig, Device};
-        let mut state = ServerState::new(DaemonConfig {
-            model_path: None,
-            cache_path: None,
-            device: Device::Cpu,
-            threads: Some(4),
-        });
+        let mut state = ServerState::new(test_config());
         let result = super::handle_shutdown(&mut state);
         assert!(result.is_ok());
         assert!(state.is_shutdown());
