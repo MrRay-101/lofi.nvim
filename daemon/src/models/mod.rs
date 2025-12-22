@@ -1,31 +1,22 @@
-//! MusicGen model components.
+//! Model components for music generation backends.
 //!
-//! This module contains all the ONNX model wrappers for MusicGen:
-//! - [`TextEncoder`](text_encoder::MusicGenTextEncoder): Text prompt encoding
-//! - [`Decoder`](decoder::MusicGenDecoder): Autoregressive token generation
-//! - [`AudioCodec`](audio_codec::MusicGenAudioCodec): Token to audio decoding
-//! - [`DelayPatternMaskIds`](delay_pattern::DelayPatternMaskIds): 4-codebook delay pattern
-//! - [`Logits`](logits::Logits): Logits processing and sampling
-//! - [`device`](device): Device detection and execution provider selection
+//! This module contains:
+//! - [`musicgen`]: MusicGen ONNX model wrappers for 30-second generation
+//! - [`ace_step`]: ACE-Step ONNX model wrappers for long-form generation (to be implemented)
+//! - [`device`]: Device detection and execution provider selection
+//! - [`downloader`]: Model download and management
 
-pub mod audio_codec;
-pub mod decoder;
-pub mod delay_pattern;
+pub mod ace_step;
 pub mod device;
 pub mod downloader;
-pub mod loader;
-pub mod logits;
-pub mod text_encoder;
+pub mod musicgen;
 
-// Re-export commonly used types
-pub use audio_codec::MusicGenAudioCodec;
-pub use decoder::MusicGenDecoder;
-pub use delay_pattern::DelayPatternMaskIds;
+// Re-export commonly used types from submodules
 pub use device::{detect_available_providers, get_device_name, get_providers, AvailableProvider};
 pub use downloader::ensure_models;
-pub use loader::{
+pub use musicgen::{
     check_models, detect_model_version, generate_model_version, load_sessions,
-    load_sessions_with_device, MusicGenModels, MODEL_URLS, REQUIRED_MODEL_FILES,
+    load_sessions_with_device, DelayPatternMaskIds, Logits, MusicGenAudioCodec, MusicGenDecoder,
+    MusicGenModels, MusicGenTextEncoder, DEFAULT_GUIDANCE_SCALE, DEFAULT_TOP_K, MODEL_URLS,
+    REQUIRED_MODEL_FILES,
 };
-pub use logits::{Logits, DEFAULT_GUIDANCE_SCALE, DEFAULT_TOP_K};
-pub use text_encoder::MusicGenTextEncoder;

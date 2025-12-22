@@ -10,8 +10,8 @@ use crate::types::ModelConfig;
 
 use super::audio_codec::MusicGenAudioCodec;
 use super::decoder::MusicGenDecoder;
-use super::device::{get_device_name, get_providers};
 use super::text_encoder::MusicGenTextEncoder;
+use crate::models::device::{get_device_name, get_providers};
 
 /// Complete set of loaded MusicGen models.
 pub struct MusicGenModels {
@@ -225,7 +225,7 @@ fn load_or_default_config(model_dir: &Path) -> Result<ModelConfig> {
 /// # Example
 ///
 /// ```
-/// use lofi_daemon::models::generate_model_version;
+/// use lofi_daemon::models::musicgen::generate_model_version;
 /// assert_eq!(generate_model_version("small", "fp16", 1), "musicgen-small-fp16-v1");
 /// ```
 pub fn generate_model_version(size: &str, precision: &str, version: u32) -> String {

@@ -164,4 +164,3 @@ mod tests {
         assert!(attention_mask.try_extract_tensor::<i64>().is_ok());
     }
 }
-

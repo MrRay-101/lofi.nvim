@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::error::{DaemonError, Result};
 
-use super::loader::{MODEL_URLS, REQUIRED_MODEL_FILES};
+use super::musicgen::{MODEL_URLS, REQUIRED_MODEL_FILES};
 
 /// Downloads all required model files if not present.
 ///

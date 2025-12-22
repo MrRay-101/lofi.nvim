@@ -33,20 +33,20 @@ Based on plan.md project structure:
 - [X] T004 [P] Export MusicDCAE decoder to dcae_decoder.onnx using export script
 - [X] T005 [P] Export ADaMoSHiFiGAN vocoder to vocoder.onnx using export script
 - [X] T006 Verify all ONNX exports load correctly with onnxruntime
-- [ ] T007 Create daemon/src/models/ace_step/ directory structure
-- [ ] T008 [P] Restructure existing MusicGen code into daemon/src/models/musicgen/mod.rs
-- [ ] T009 [P] Create daemon/src/models/musicgen/models.rs from existing loader.rs
-- [ ] T010 [P] Create daemon/src/models/musicgen/text_encoder.rs from existing code
-- [ ] T011 [P] Create daemon/src/models/musicgen/decoder.rs from existing code
-- [ ] T012 [P] Create daemon/src/models/musicgen/audio_codec.rs from existing code
-- [ ] T013 Update daemon/src/models/mod.rs to re-export restructured modules
+- [X] T007 Create daemon/src/models/ace_step/ directory structure
+- [X] T008 [P] Restructure existing MusicGen code into daemon/src/models/musicgen/mod.rs
+- [X] T009 [P] Create daemon/src/models/musicgen/models.rs from existing loader.rs
+- [X] T010 [P] Create daemon/src/models/musicgen/text_encoder.rs from existing code
+- [X] T011 [P] Create daemon/src/models/musicgen/decoder.rs from existing code
+- [X] T012 [P] Create daemon/src/models/musicgen/audio_codec.rs from existing code
+- [X] T013 Update daemon/src/models/mod.rs to re-export restructured modules
 
 ### Phase 1 Verification (MANDATORY - Principle VI)
 
-- [ ] V001 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
-- [ ] V002 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
-- [ ] V003 [VERIFY] List all new/moved files and confirm each is imported/used
-- [ ] V004 [VERIFY] Existing MusicGen functionality still works after restructure
+- [X] V001 [VERIFY] Run `cargo build` in daemon/ - must succeed with zero errors
+- [X] V002 [VERIFY] Run `grep -rn "TODO\|FIXME" daemon/src/` - must return empty
+- [X] V003 [VERIFY] List all new/moved files and confirm each is imported/used
+- [X] V004 [VERIFY] Existing MusicGen functionality still works after restructure
 
 ---
 
