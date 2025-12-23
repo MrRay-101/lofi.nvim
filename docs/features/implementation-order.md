@@ -6,18 +6,17 @@
 
 ## Phase 1: Procedural MVP
 3. daemon-lifecycle.md
-4. procedural-generation.md
-5. audio-playback.md
-6. playlist-queue.md
-7. cache-management.md
-8. progress-notifications.md
-9. plugin-setup.md
-10. health-check.md
+4. audio-playback.md
+5. playlist-queue.md
+6. cache-management.md
+7. progress-notifications.md
+8. plugin-setup.md
+9. health-check.md
 
 ## Phase 2: AI Generation
-11. ai-generation.md (full integration after Phase 0 success)
-12. prefetch.md
+10. ai-generation.md (full integration after Phase 0 success)
+11. prefetch.md
 
 ## Phase 3: Polish
-13. statusline.md
-14. telescope.md
+12. statusline.md
+13. telescope.md
